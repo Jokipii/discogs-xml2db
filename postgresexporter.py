@@ -199,9 +199,9 @@ class PostgresExporter(object):
 		if len(release.styles) != 0:
 			values.append(release.styles)
 			columns += ",styles"
-		if len(release.master_id) != 0:
-			values.append(release..master_id)
-			columns += ",.master_id"
+		if (release.master_id) != 0:
+			values.append(release.master_id)
+			columns += ",master_id"
 		if len(release.data_quality) != 0:
 			values.append(release.data_quality)
 			columns += ",data_quality"
@@ -338,9 +338,9 @@ class PostgresExporter(object):
 		if len(release.styles) != 0:
 			values.append(release.styles)
 			columns += ",styles"
-		if len(release.master_id) != 0:
-			values.append(release..master_id)
-			columns += ",.master_id"
+		if (release.master_id) != 0:
+			values.append(release.master_id)
+			columns += ",master_id"
 		if len(release.data_quality) != 0:
 			values.append(release.data_quality)
 			columns += ",data_quality"
@@ -477,9 +477,9 @@ class PostgresExporter(object):
 		if len(release.styles) != 0:
 			values.append(release.styles)
 			columns += ",styles"
-		if len(release.master_id) != 0:
-			values.append(release..master_id)
-			columns += ",.master_id"
+		if (release.master_id) != 0:
+			values.append(release.master_id)
+			columns += ",master_id"
 		if len(release.data_quality) != 0:
 			values.append(release.data_quality)
 			columns += ",data_quality"
@@ -616,9 +616,9 @@ class PostgresExporter(object):
 		if len(release.styles) != 0:
 			values.append(release.styles)
 			columns += ",styles"
-		if len(release.master_id) != 0:
-			values.append(release..master_id)
-			columns += ",.master_id"
+		if (release.master_id) != 0:
+			values.append(release.master_id)
+			columns += ",master_id"
 		if len(release.data_quality) != 0:
 			values.append(release.data_quality)
 			columns += ",data_quality"
@@ -755,9 +755,9 @@ class PostgresExporter(object):
 		if len(release.styles) != 0:
 			values.append(release.styles)
 			columns += ",styles"
-		if len(release.master_id) != 0:
-			values.append(release..master_id)
-			columns += ",.master_id"
+		if (release.master_id) != 0:
+			values.append(release.master_id)
+			columns += ",master_id"
 		if len(release.data_quality) != 0:
 			values.append(release.data_quality)
 			columns += ",data_quality"
