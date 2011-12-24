@@ -182,7 +182,8 @@ class PostgresExporter(object):
 		values.append(release.id)
 		values.append(release.title)
 		values.append(release.status)
-		columns = "id, title, status"
+		values.append(release.master_id)
+		columns = "id, title, status ,master_id"
 
 		if len(release.country) != 0:
 			values.append(release.country)
@@ -199,9 +200,6 @@ class PostgresExporter(object):
 		if len(release.styles) != 0:
 			values.append(release.styles)
 			columns += ",styles"
-		if (release.master_id) != 0:
-			values.append(release.master_id)
-			columns += ",master_id"
 		if len(release.data_quality) != 0:
 			values.append(release.data_quality)
 			columns += ",data_quality"
@@ -321,7 +319,8 @@ class PostgresExporter(object):
 		values.append(release.id)
 		values.append(release.title)
 		values.append(release.status)
-		columns = "id, title, status"
+		values.append(release.master_id)
+		columns = "id, title, status ,master_id"
 
 		if len(release.country) != 0:
 			values.append(release.country)
@@ -338,9 +337,6 @@ class PostgresExporter(object):
 		if len(release.styles) != 0:
 			values.append(release.styles)
 			columns += ",styles"
-		if (release.master_id) != 0:
-			values.append(release.master_id)
-			columns += ",master_id"
 		if len(release.data_quality) != 0:
 			values.append(release.data_quality)
 			columns += ",data_quality"
@@ -460,7 +456,8 @@ class PostgresExporter(object):
 		values.append(release.id)
 		values.append(release.title)
 		values.append(release.status)
-		columns = "id, title, status"
+		values.append(release.master_id)
+		columns = "id, title, status ,master_id"
 
 		if len(release.country) != 0:
 			values.append(release.country)
@@ -477,9 +474,6 @@ class PostgresExporter(object):
 		if len(release.styles) != 0:
 			values.append(release.styles)
 			columns += ",styles"
-		if (release.master_id) != 0:
-			values.append(release.master_id)
-			columns += ",master_id"
 		if len(release.data_quality) != 0:
 			values.append(release.data_quality)
 			columns += ",data_quality"
@@ -599,7 +593,8 @@ class PostgresExporter(object):
 		values.append(release.id)
 		values.append(release.title)
 		values.append(release.status)
-		columns = "id, title, status"
+		values.append(release.master_id)
+		columns = "id, title, status ,master_id"
 
 		if len(release.country) != 0:
 			values.append(release.country)
@@ -616,9 +611,6 @@ class PostgresExporter(object):
 		if len(release.styles) != 0:
 			values.append(release.styles)
 			columns += ",styles"
-		if (release.master_id) != 0:
-			values.append(release.master_id)
-			columns += ",master_id"
 		if len(release.data_quality) != 0:
 			values.append(release.data_quality)
 			columns += ",data_quality"
@@ -738,7 +730,8 @@ class PostgresExporter(object):
 		values.append(release.id)
 		values.append(release.title)
 		values.append(release.status)
-		columns = "id, title, status"
+		values.append(release.master_id)
+		columns = "id, title, status ,master_id"
 
 		if len(release.country) != 0:
 			values.append(release.country)
@@ -755,9 +748,6 @@ class PostgresExporter(object):
 		if len(release.styles) != 0:
 			values.append(release.styles)
 			columns += ",styles"
-		if (release.master_id) != 0:
-			values.append(release.master_id)
-			columns += ",master_id"
 		if len(release.data_quality) != 0:
 			values.append(release.data_quality)
 			columns += ",data_quality"

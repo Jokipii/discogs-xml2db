@@ -35,7 +35,7 @@ class Release:
      self.tracklist = [] #join
      self.extraartists = []
      self.data_quality = ''
-     self.master_id = ''
+     self.master_id = 0
      self.identifiers = ''
      #self.companies = []
      #self.videos = []
