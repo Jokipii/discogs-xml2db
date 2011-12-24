@@ -29,28 +29,28 @@ class MasterHandler(xml.sax.handler.ContentHandler):
 							'anv',
 							'artist',
 							'artists',
-							#'country',
-							#'data_quality',
+							'country',
+							'data_quality',
 							'description',
-							#'descriptions', #'duration', #'extraartists', #'format', #'formats',
+							'descriptions', #'duration', #'extraartists', #'format', #'formats',
 							'genre', 'genres',
 							'image',
 							'images',
 							'join',
-							#'label', #'labels',
+							'label', 'labels',
 							'masters', 'master',
 							'main_release',
 							'name',
 							'notes',
-							#'position', #'release', #'released', #'releases',
+							'position', #'release', #'released', #'releases',
 							'role',
 							'style',
 							'styles',
 							'title',
-							#'track', #'tracklist',
+							'track', #'tracklist',
 							'tracks',
-							#'url', #'urls',
-							#'videos', 'video',
+							'url', #'urls',
+							'videos', 'video',
 							'year'
 							)
 		self.master = None
@@ -107,6 +107,9 @@ class MasterHandler(xml.sax.handler.ContentHandler):
 		elif name == 'notes':
 			if len(self.buffer) != 0:
 				self.master.notes = self.buffer
+		elif name == 'data_quality':
+			if len(self.buffer) != 0:
+				self.master.data_quality = self.buffer
 		elif name == 'genre':
 			if len(self.buffer) != 0:
 				self.master.genres.append(self.buffer)

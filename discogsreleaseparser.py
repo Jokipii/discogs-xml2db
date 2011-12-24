@@ -30,6 +30,7 @@ class ReleaseHandler(xml.sax.handler.ContentHandler):
 							'artist',
 							'artists',
 							'country',
+							'data_quality',
 							'description',
 							'descriptions',
 							'duration',
@@ -38,6 +39,8 @@ class ReleaseHandler(xml.sax.handler.ContentHandler):
 							'formats',
 							'genre',
 							'genres',
+							'identifiers',
+							'identifier',
 							'image',
 							'images',
 							'join',
@@ -59,6 +62,8 @@ class ReleaseHandler(xml.sax.handler.ContentHandler):
 							'tracks',
 							'url',
 							'urls',
+							'videos',
+							'video',
 							)
 		self.release = None
 		self.buffer = ''
@@ -67,6 +72,7 @@ class ReleaseHandler(xml.sax.handler.ContentHandler):
 		self.stop_after = stop_after
 		self.ignore_missing_tags = ignore_missing_tags
 		self.stack = []
+		self.master = model.Master()
 
 	def startElement(self, name, attrs):
 		if not name in self.knownTags:
@@ -138,6 +144,9 @@ class ReleaseHandler(xml.sax.handler.ContentHandler):
 		elif name == 'notes':
 			if len(self.buffer) != 0:
 				self.release.notes = self.buffer
+		elif name == 'data_quality':
+			if len(self.buffer) != 0:
+				self.release.data_quality = self.buffer
 		elif name == 'genre':
 			if len(self.buffer) != 0:
 				self.release.genres.append(self.buffer)
@@ -220,11 +229,13 @@ class ReleaseHandler(xml.sax.handler.ContentHandler):
 			self.release.tracklist[-1].position = self.buffer
 		elif name == 'master_id':
 			self.release.master_id = int(self.buffer)
+		elif name == 'identifiers':
+			self.release.identifiers = self.buffer
 		elif name == 'release':
 			# end of tag
-			len_a = len(self.master.artists)
+			len_a = len(self.release.artists)
 			if len_a == 0:
-				sys.stderr.writelines("Ignoring Release %s with no artist. Dictionary: %s\n" % (self.artist.id, self.artist.__dict__))
+				sys.stderr.writelines("Ignoring Release %s with no artist. Dictionary: %s\n" % (self.release.id, self.release.__dict__))
 			else:
 				if len(self.release.artists) == 1:
 					self.release.artist = self.release.artists[0]

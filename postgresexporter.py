@@ -87,6 +87,9 @@ class PostgresExporter(object):
 		if len(label.sublabels) != 0:
 			values.append(label.sublabels)
 			columns += ",sublabels"
+		if len(label.data_quality) != 0:
+			values.append(label.data_quality)
+			columns += ",data_quality"
 
 		escapeStrings = ''
 		for counter in xrange(1, len(columns.split(","))):
@@ -142,6 +145,9 @@ class PostgresExporter(object):
 		if len(artist.members) != 0:
 			values.append(artist.members)
 			columns += ",members"
+		if len(artist.data_quality) != 0:
+			values.append(artist.data_quality)
+			columns += ",data_quality"
 
 		escapeStrings = ''
 		for counter in xrange(1, len(columns.split(","))):
@@ -193,6 +199,9 @@ class PostgresExporter(object):
 		if len(release.styles) != 0:
 			values.append(release.styles)
 			columns += ",styles"
+		if len(release.data_quality) != 0:
+			values.append(release.data_quality)
+			columns += ",data_quality"
 
 		# INSERT INTO DATABASE
 		escapeStrings = ''
@@ -326,6 +335,9 @@ class PostgresExporter(object):
 		if len(release.styles) != 0:
 			values.append(release.styles)
 			columns += ",styles"
+		if len(release.data_quality) != 0:
+			values.append(release.data_quality)
+			columns += ",data_quality"
 
 		#INSERT INTO DATABASE
 		escapeStrings = ''
@@ -459,6 +471,9 @@ class PostgresExporter(object):
 		if len(release.styles) != 0:
 			values.append(release.styles)
 			columns += ",styles"
+		if len(release.data_quality) != 0:
+			values.append(release.data_quality)
+			columns += ",data_quality"
 
 		#INSERT INTO DATABASE
 		escapeStrings = ''
@@ -592,6 +607,9 @@ class PostgresExporter(object):
 		if len(release.styles) != 0:
 			values.append(release.styles)
 			columns += ",styles"
+		if len(release.data_quality) != 0:
+			values.append(release.data_quality)
+			columns += ",data_quality"
 
 		# INSERT INTO DATABASE
 		escapeStrings = ''
@@ -725,6 +743,9 @@ class PostgresExporter(object):
 		if len(release.styles) != 0:
 			values.append(release.styles)
 			columns += ",styles"
+		if len(release.data_quality) != 0:
+			values.append(release.data_quality)
+			columns += ",data_quality"
 
 		#INSERT INTO DATABASE
 		escapeStrings = ''
@@ -855,6 +876,9 @@ class PostgresExporter(object):
 		if len(master.styles) != 0:
 			values.append(master.styles)
 			columns += ",styles"
+		if len(master.data_quality) != 0:
+			values.append(master.data_quality)
+			columns += ",data_quality"
 
 		#INSERT INTO DATABASE
 		escapeStrings = ''

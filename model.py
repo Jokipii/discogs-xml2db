@@ -13,6 +13,7 @@ class Artist:
       self.groups = []#GroupNameList, foreign key name, class Artist
       #self.artistType = 0 #0 = person, 1 = group 
       #self.artist_id = ''
+      self.data_quality = ''
 
 class Release:
    def __init__(self):
@@ -33,6 +34,11 @@ class Release:
      self.artistJoins = [] #release_artist_artist
      self.tracklist = [] #join
      self.extraartists = []
+     self.data_quality = ''
+     self.master_id = ''
+     self.identifiers = ''
+     #self.companies = []
+     #self.videos = []
 
 class Master:
    def __init__(self):
@@ -50,7 +56,9 @@ class Master:
      self.artists = [] #join
      self.artistJoins = [] #release_artist_artist
      self.extraartists = []
-
+     self.data_quality = ''
+     #self.videos = []
+     #self.tracklist = []
 
 class ArtistJoin:
   def __init__(self):
@@ -77,6 +85,7 @@ class Label:
     self.parentLabel = ''
     self.urls = []
     self.sublabels = []
+    self.data_quality = ''
 
 class Format:
   def __init__(self):
