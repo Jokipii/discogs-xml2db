@@ -107,9 +107,6 @@ class MasterHandler(xml.sax.handler.ContentHandler):
 		elif name == 'notes':
 			if len(self.buffer) != 0:
 				self.master.notes = self.buffer
-		elif name == 'data_quality':
-			if len(self.buffer) != 0:
-				self.master.data_quality = self.buffer
 		elif name == 'genre':
 			if len(self.buffer) != 0:
 				self.master.genres.append(self.buffer)
@@ -151,6 +148,9 @@ class MasterHandler(xml.sax.handler.ContentHandler):
 						description = role[lIndex + 1: rIndex]
 						role = (role[:lIndex].strip(), description)
 					self.master.extraartists[-1].roles.append(role)
+		elif name == 'data_quality':
+			if len(self.buffer) != 0:
+				self.master.data_quality = self.buffer
 		elif name == 'master':
 			# end of tag
 			len_a = len(self.master.artists)

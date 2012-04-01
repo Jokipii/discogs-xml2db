@@ -24,7 +24,21 @@ labelCounter = 0
 
 
 class LabelHandler(xml.sax.handler.ContentHandler):
-	inElement = {'name':False,'label':False,'labels':False,'contactinfo':False,'image':False,'images':False,'urls':False,'url':False,'profile':False,'parentLabel':False,'sublabels':False,'id':False,'data_quality':False}
+	inElement = {
+				'id': False,
+				'label': False,
+				'labels': False,
+				'data_quality': False,
+				'contactinfo': False,
+				'image': False,
+				'images': False,
+				'name': False,
+				'profile': False,
+				'parentLabel': False,
+				'sublabels': False,
+				'urls': False,
+				'url': False,
+				}
 	label = model.Label()
 	buffer = ''
 	unknown_tags = []
@@ -74,6 +88,9 @@ class LabelHandler(xml.sax.handler.ContentHandler):
 		elif name == 'contactinfo':
 			if len(self.buffer) != 0:
 				self.label.contactinfo = self.buffer
+		elif name == 'data_quality':
+			if len(self.buffer) != 0:
+				self.label.data_quality = self.buffer
 		elif name == 'profile':
 			if len(self.buffer) != 0:
 				self.label.profile = self.buffer
@@ -83,9 +100,6 @@ class LabelHandler(xml.sax.handler.ContentHandler):
 		elif name == 'parentLabel':
 			if len(self.buffer) != 0:
 				self.label.parentLabel = self.buffer
-		elif name == 'data_quality':
-			if len(self.buffer) != 0:
-				self.label.data_quality = self.buffer
 		elif name == "label":
 			if self.inElement['sublabels']:
 				if len(self.buffer) != 0:

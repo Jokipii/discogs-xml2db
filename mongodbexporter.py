@@ -1,3 +1,4 @@
+from datetime import date
 from hashlib import md5
 from jsonexporter import jsonizer as _jsonizer
 import json
@@ -137,9 +138,10 @@ class _IdHashPairs(object):
 
 
 class MongoDbExporter(object):
-	def __init__(self, mongo_uri):
+	def __init__(self, mongo_uri, data_quality=[]):
 		'''mongo_uri: mongodb://[username:password@]host1[:port1],...[,hostN[:portN]][/[database][?options]]'''
 		# TODO: if uri is file://path/ - create a json dump for using with mongo import
+		self.min_data_quality = data_quality
 		self._options = {}
 		self._quick_uniq = None
 		self.connect(mongo_uri)
@@ -183,7 +185,15 @@ class MongoDbExporter(object):
 		if self._quick_uniq is not None:
 			self._quick_uniq.process(collection, id, md5_digest)
 
+	def good_quality(self, what):
+		if len(self.min_data_quality):
+			return what.data_quality.lower() in self.min_data_quality
+		return True
+
 	def execute(self, collection, what):
+		if not self.good_quality(what):
+			# print "Bad quality: %s for %s" % (what.data_quality, what.id)
+			return
 		# have to convert it to json and back because
 		# on simple objects couchdb-python throws:
 		# TypeError: argument of type 'instance' is not iterable
@@ -193,6 +203,7 @@ class MongoDbExporter(object):
 		uniq, md5 = self._is_uniq(collection, what.id, json_string)
 		if uniq:
 			doc = json.loads(json_string)
+			doc.updated_on = "%s" % date.today()
 			self.db[collection].update({'id': what.id}, doc, upsert=True)
 			self._store_processed(collection, what.id, md5)
 
