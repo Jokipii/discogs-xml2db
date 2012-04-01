@@ -31,14 +31,13 @@ class Release:
      self.anv = '' #used only if artist name is missing
      self.artist = ''
      self.artists = [] #join
-     self.artistJoins = [] #release_artist_artist
      self.tracklist = [] #join
      self.extraartists = []
      self.data_quality = ''
      self.master_id = 0
-     self.identifiers = ''
-     #self.companies = []
-     #self.videos = []
+     self.identifiers = []
+     self.companies = []
+     self.videos = []
 
 class Master:
    def __init__(self):
@@ -51,13 +50,11 @@ class Master:
      self.genres = []
      self.styles = []
      self.images = []
-     self.anv = '' #used only if artist name is missing
      self.artist = ''
      self.artists = [] #join
-     self.artistJoins = [] #release_artist_artist
      self.extraartists = []
      self.data_quality = ''
-     #self.videos = []
+     self.videos = []
      #self.tracklist = []
 
 class ArtistJoin:
@@ -91,6 +88,7 @@ class Format:
   def __init__(self):
     self.name = ''
     self.qty = 0
+    self.text = ''
     self.descriptions = []
 
 class Style:
@@ -123,6 +121,28 @@ class ImageType:
   PRIMARY = 0
   SECONDARY = 1
 
+class Video:
+  def __init__(self):
+    self.duration = 0
+    self.embed = ''
+    self.title = ''
+    self.description = ''
+    self.uri = ''
+
+class ArtistCredit:
+  def __init__(self):
+    self.id = 0
+    self.join = ''
+    self.tracks = ''
+    self.roles = []
+    self.anv = ''
+    self.name = ''
+
+class Identifier:
+  def __init__(self):
+    self.type = ''
+    self.value = ''
+    self.description = ''
 
 class ParserStopError(Exception):
 	"""Raised by a parser to signal that it wants to stop parsing."""

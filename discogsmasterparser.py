@@ -27,6 +27,7 @@ class MasterHandler(xml.sax.handler.ContentHandler):
 	def __init__(self, exporter, stop_after=0, ignore_missing_tags=False):
 		self.knownTags = (
 							'anv',
+							'id',
 							'artist',
 							'artists',
 							'country',
@@ -84,6 +85,13 @@ class MasterHandler(xml.sax.handler.ContentHandler):
 				print "ATTR ERROR"
 				print attrs
 				sys.exit()
+		elif name == "video":
+			self.vid = model.Video()
+			self.vid.duration = attrs["duration"]
+			self.vid.embed = attrs["embed"]
+			self.vid.uri = attrs["src"]
+		elif name == "artist":
+			self.master.artists.append(model.ArtistCredit())
 
 	def characters(self, data):
 		self.buffer += data
@@ -97,10 +105,6 @@ class MasterHandler(xml.sax.handler.ContentHandler):
 		elif name == 'main_release':
 			if len(self.buffer) != 0:
 				self.master.main_release = self.buffer
-		elif name == 'anv':
-			if len(self.buffer) != 0:
-				if self.stack[-3] == 'artists' and self.stack[-4] == 'master':
-					self.master.anv = self.buffer
 		elif name == 'year':
 			if len(self.buffer) != 0:
 				self.master.year = int(self.buffer)
@@ -119,22 +123,19 @@ class MasterHandler(xml.sax.handler.ContentHandler):
 				#global styles
 				#if not styles.has_key(self.buffer):
 				#  styles[self.buffer] = Style(self.buffer)
+		elif name == 'id':
+			if len(self.buffer) != 0:
+				self.master.artists[-1].id = int(self.buffer)
 		elif name == 'name':
 			if len(self.buffer) != 0:
-				self.master.artists.append(self.buffer)
+				self.master.artists[-1].name = self.buffer
+		elif name == 'anv':
+			if self.stack[-3] == 'artists' and self.stack[-4] == 'master':
+				if len(self.buffer) != 0:
+					self.master.artists[-1].anv = self.buffer
 		elif name == 'join':
 			if len(self.buffer) != 0:
-				aj = model.ArtistJoin()
-				if len(self.master.artists) > 0:
-					aj.artist1 = self.master.artists[-1]
-				else:
-					aj.artist1 = self.master.anv
-					self.master.artists.append(self.master.anv)
-				aj.join_relation = self.buffer
-				self.master.artistJoins.append(aj)
-				#global joins
-				#if not joins.has_key(self.buffer):
-				#  joins[self.buffer] = True
+				self.master.artists[-1].join = self.buffer
 		elif name == 'role':
 			if len(self.buffer) != 0:
 				#print "ROLE PRE" + str(self.buffer)
@@ -160,9 +161,9 @@ class MasterHandler(xml.sax.handler.ContentHandler):
 				if len_a == 1:
 					self.master.artist = self.master.artists[0]
 				else:
-					for j in self.master.artistJoins:
-						self.master.artist += '%s %s ' % (j.artist1, j.join_relation)
-					self.master.artist += self.master.artists[-1]
+					for j in self.master.artists:
+						self.master.artist += '%s %s ' % (j.name, j.join)
+					self.master.artist += self.master.artists[-1].name
 
 				global masterCounter
 				masterCounter += 1

@@ -80,6 +80,9 @@ class PostgresExporter(object):
 		values.append(label.name)
 		columns = "id,name"
 
+		if len(label.data_quality) != 0:
+			values.append(label.data_quality)
+			columns += ",data_quality"
 		if len(label.contactinfo) != 0:
 			values.append(label.contactinfo)
 			columns += ",contactinfo"
@@ -131,6 +134,9 @@ class PostgresExporter(object):
 		values.append(artist.name)
 		columns = "id,name"
 
+		if len(artist.data_quality) != 0:
+			values.append(artist.data_quality)
+			columns += ",data_quality"
 		if len(artist.realname) != 0:
 			values.append(artist.realname)
 			columns += ",realname"
@@ -190,6 +196,12 @@ class PostgresExporter(object):
 		values.append(release.status)
 		columns = "id, title, status"
 
+		if len(release.data_quality) != 0:
+			values.append(release.data_quality)
+			columns += ",data_quality"
+		if (release.master_id):
+			values.append(release.master_id)
+			columns += ",master_id"
 		if len(release.country) != 0:
 			values.append(release.country)
 			columns += ",country"
@@ -244,35 +256,26 @@ class PostgresExporter(object):
 						self.execute("INSERT INTO format(name) VALUES(%s);", (fmt.name, ))
 					except PostgresExporter.ExecuteError, e:
 						print "%s" % (e.args)
-				query = "INSERT INTO releases_formats(release_id, format_name, qty, descriptions) VALUES(%s,%s,%s,%s);"
-				self.execute(query, (release.id, fmt.name, fmt.qty, fmt.descriptions))
+				query = "INSERT INTO releases_formats(release_id, format_name, qty, descriptions, text) VALUES(%s,%s,%s,%s,%s);"
+				self.execute(query, (release.id, fmt.name, fmt.qty, fmt.descriptions, fmt.text))
+		for identifier in release.identifiers:
+			query = "INSERT INTO release_identifier(release_id, type, value, description) VALUES(%s,%s,%s,%s);"
+			self.execute(query, (release.id, identifier.type, identifier.value, identifier.description))
 		labelQuery = "INSERT INTO releases_labels(release_id, label, catno) VALUES(%s,%s,%s);"
 		for lbl in release.labels:
 			self.execute(labelQuery, (release.id, lbl.name, lbl.catno))
 
 		if len(release.artists) > 1:
 			for artist in release.artists:
-				query = "INSERT INTO releases_artists(release_id, artist_name) VALUES(%s,%s);"
-				self.execute(query, (release.id, artist))
-			for aj in release.artistJoins:
-				query = """INSERT INTO releases_artists_joins
-												(release_id, join_relation, artist1, artist2)
-												VALUES(%s,%s,%s,%s);"""
-				artistIdx = release.artists.index(aj.artist1) + 1
-				#The last join relation is not between artists but instead
-				#something like "Bob & Alice 'PRESENTS' - Cryptographic Tunes":
-				if artistIdx >= len(release.artists):
-					values = (release.id, aj.join_relation, '', '')  # join relation is between all artists and the album
-				else:
-					values = (release.id, aj.join_relation, aj.artist1, release.artists[artistIdx])
-				self.execute(query, values)
+				query = "INSERT INTO releases_artists(release_id, artist_name, artist_id, anv, join_relation) VALUES(%s,%s,%s,%s,%s);"
+				self.execute(query, (release.id, artist.name, artist.id, artist.anv, artist.join))
 		else:
 			if len(release.artists) == 0:  # use anv if no artist name
-				self.execute("INSERT INTO releases_artists(release_id, artist_name) VALUES(%s,%s);",
-						(release.id, release.anv))
+				self.execute("INSERT INTO releases_artists(release_id, artist_name, artist_id, anv, join_relation) VALUES(%s,%s,%s,%s,%s);",
+						(release.id, release.artist, None, None, None))
 			else:
-				self.execute("INSERT INTO releases_artists(release_id, artist_name) VALUES(%s,%s);",
-						(release.id, release.artists[0]))
+				self.execute("INSERT INTO releases_artists(release_id, artist_name, artist_id, anv, join_relation) VALUES(%s,%s,%s,%s,%s);",
+						(release.id, release.artists[0].name, release.artists[0].id, release.artists[0].anv, release.artists[0].join))
 
 		for extr in release.extraartists:
 			# decide whether to insert flattened composite roles or take the first one from the tuple
@@ -285,35 +288,24 @@ class PostgresExporter(object):
 			self.execute("INSERT INTO track(release_id, title, duration, position, track_id) VALUES(%s,%s,%s,%s,%s);",
 					(release.id, trk.title, trk.duration, trk.position, trackid))
 			for artist in trk.artists:
-				query = "INSERT INTO tracks_artists(track_id, artist_name) VALUES(%s,%s);"
-				self.execute(query, (trackid, artist))
-			for aj in trk.artistJoins:
-				query = """INSERT INTO tracks_artists_joins
-											(track_id, join_relation, artist1, artist2)
-											VALUES(%s,%s,%s,%s);"""
-				artistIdx = trk.artists.index(aj.artist1) + 1
-				if artistIdx >= len(trk.artists):
-					values = (trackid, aj.join_relation, '', '')  # join relation is between all artists and the track
-				else:
-					values = (trackid, aj.join_relation, aj.artist1, trk.artists[artistIdx])
-				self.execute(query, values)
-
-				#Insert Extraartists for track
-				for extr in trk.extraartists:
-					#print extr.name
-					#print extr.roles
-					self.execute("INSERT INTO tracks_extraartists(track_id, artist_name) VALUES(%s,%s);", (trackid, extr.name))
-					for role in extr.roles:
-						if type(role).__name__ == 'tuple':
-							#print trackid
-							#print extr.name
-							#print role[0]
-							#print role[1]
-							self.execute("INSERT INTO tracks_extraartists_roles(track_id, artist_name, role_name, role_details) VALUES(%s,%s,%s,%s);",
-									(trackid, extr.name, role[0], role[1]))
-						else:
-							self.execute("INSERT INTO tracks_extraartists_roles(track_id, artist_name, role_name) VALUES(%s,%s,%s);",
-									(trackid, extr.name, role))
+				query = "INSERT INTO tracks_artists(track_id, artist_name, artist_id, anv, join_relation) VALUES(%s,%s,%s,%s,%s);"
+				self.execute(query, (trackid, artist.name, artist.id, artist.anv, artist.join))
+			#Insert Extraartists for track
+			for extr in trk.extraartists:
+				#print extr.name
+				#print extr.roles
+				self.execute("INSERT INTO tracks_extraartists(track_id, artist_name) VALUES(%s,%s);", (trackid, extr.name))
+				for role in extr.roles:
+					if type(role).__name__ == 'tuple':
+						#print trackid
+						#print extr.name
+						#print role[0]
+						#print role[1]
+						self.execute("INSERT INTO tracks_extraartists_roles(track_id, artist_name, role_name, role_details) VALUES(%s,%s,%s,%s);",
+								(trackid, extr.name, role[0], role[1]))
+					else:
+						self.execute("INSERT INTO tracks_extraartists_roles(track_id, artist_name, role_name) VALUES(%s,%s,%s);",
+								(trackid, extr.name, role))
 
 	def storeMaster(self, master):
 		if not self.good_quality(master):
@@ -325,6 +317,9 @@ class PostgresExporter(object):
 		values.append(master.main_release)
 		columns = "id, title, main_release"
 
+		if len(master.data_quality) != 0:
+			values.append(master.data_quality)
+			columns += ",data_quality"
 		if master.year:
 			values.append(master.year)
 			columns += ",year"
@@ -371,27 +366,15 @@ class PostgresExporter(object):
 
 		if len(master.artists) > 1:
 			for artist in master.artists:
-				query = "INSERT INTO masters_artists(master_id, artist_name) VALUES(%s,%s);"
-				self.execute(query, (master.id, artist))
-			for aj in master.artistJoins:
-				query = """INSERT INTO masters_artists_joins
-												(master_id, join_relation, artist1, artist2)
-												VALUES(%s,%s,%s,%s);"""
-				artistIdx = master.artists.index(aj.artist1) + 1
-				#The last join relation is not between artists but instead
-				#something like "Bob & Alice 'PRESENTS' - Cryptographic Tunes":
-				if artistIdx >= len(master.artists):
-					values = (master.id, aj.join_relation, '', '')  # join relation is between all artists and the album
-				else:
-					values = (master.id, aj.join_relation, aj.artist1, master.artists[artistIdx])
-				self.execute(query, values)
+				query = "INSERT INTO masters_artists(master_id, artist_name, artist_id, anv, join_relation) VALUES(%s,%s,%s,%s,%s);"
+				self.execute(query, (master.id, artist.name, artist.id, artist.anv, artist.join))
 		else:
 			if len(master.artists) == 0:  # use anv if no artist name
-				self.execute("INSERT INTO masters_artists(master_id, artist_name) VALUES(%s,%s);",
-						(master.id, master.anv))
+				self.execute("INSERT INTO masters_artists(master_id, artist_name, artist_id, anv, join_relation) VALUES(%s,%s,%s,%s,%s);",
+						(master.id, master.artist, None, None, None))
 			else:
-				self.execute("INSERT INTO masters_artists(master_id, artist_name) VALUES(%s,%s);",
-						(master.id, master.artists[0]))
+				self.execute("INSERT INTO masters_artists(master_id, artist_name, artist_id, anv, join_relation) VALUES(%s,%s,%s,%s,%s);",
+						(master.id, master.artists[0].name, master.artists[0].id, master.artists[0].anv, None))
 
 		for extr in master.extraartists:
 			# decide whether to insert flattened composite roles or take the first one from the tuple
