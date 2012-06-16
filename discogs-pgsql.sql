@@ -17,7 +17,7 @@ SET default_with_oids = false;
 -- Type for quality
 CREATE TYPE quality AS ENUM ('Entirely Incorrect', 'Needs Vote', 'Needs Major Changes', 'Needs Minor Changes', 'Correct', 'Complete and Correct');
 -- Type for status
-CREATE TYPE status AS ENUM ('Accepted', 'Draft');
+CREATE TYPE status AS ENUM ('Accepted', 'Draft', 'Deleted');
 
 --
 -- Name: artist; Type: TABLE; Schema: public; Owner: -; Tablespace: 
@@ -45,15 +45,6 @@ CREATE TABLE artist (
 CREATE TABLE artists_images (
     image_uri text,
     artist_id integer
-);
-
-
---
--- Name: country; Type: TABLE; Schema: public; Owner: -; Tablespace: 
---
-
-CREATE TABLE country (
-    name text
 );
 
 
@@ -128,8 +119,8 @@ CREATE TABLE release (
     country text,
     released text,
     notes text,
-    genres text,
-    styles text,
+    genres text[],
+    styles text[],
     master_id int,
     data_quality quality
 );
@@ -140,6 +131,7 @@ CREATE TABLE release (
 --
 
 CREATE TABLE releases_artists (
+    id serial NOT NULL,
     artist_name text,
     anv text,
     join_relation text,
@@ -153,9 +145,14 @@ CREATE TABLE releases_artists (
 --
 
 CREATE TABLE releases_extraartists (
+    id serial NOT NULL,
     release_id integer,
+    artist_id integer,
     artist_name text,
-    roles text[]
+    anv text,
+    role_name text,
+    role_details text,
+    tracks text
 );
 
 
@@ -164,6 +161,7 @@ CREATE TABLE releases_extraartists (
 --
 
 CREATE TABLE releases_formats (
+    id serial NOT NULL,
     release_id integer,
     format_name text,
     qty integer,
@@ -177,6 +175,7 @@ CREATE TABLE releases_formats (
 --
 
 CREATE TABLE releases_images (
+    id serial NOT NULL,
     image_uri text,
     release_id integer
 );
@@ -187,6 +186,7 @@ CREATE TABLE releases_images (
 --
 
 CREATE TABLE releases_labels (
+    id serial NOT NULL,
     label text,
     release_id integer,
     catno text
@@ -198,6 +198,7 @@ CREATE TABLE releases_labels (
 --
 
 CREATE TABLE release_identifier (
+    id serial NOT NULL,
     release_id integer,
     type text,
     value text,
@@ -206,24 +207,15 @@ CREATE TABLE release_identifier (
 
 
 --
--- Name: role; Type: TABLE; Schema: public; Owner: -; Tablespace: 
---
-
-CREATE TABLE role (
-    role_name text
-);
-
-
---
 -- Name: track; Type: TABLE; Schema: public; Owner: -; Tablespace: 
 --
 
 CREATE TABLE track (
+    id integer,
     release_id integer,
     title text,
     duration text,
-    "position" text,
-    track_id text
+    "position" text
 );
 
 
@@ -232,11 +224,12 @@ CREATE TABLE track (
 --
 
 CREATE TABLE tracks_artists (
+    id serial NOT NULL,
+    track_id integer NOT NULL,
+    artist_id integer,
     artist_name text,
     anv text,
-    join_relation text,
-    artist_id integer,
-    track_id text
+    join_relation text
 );
 
 
@@ -245,18 +238,11 @@ CREATE TABLE tracks_artists (
 --
 
 CREATE TABLE tracks_extraartists (
+    id serial NOT NULL,
+    track_id integer,
+    artist_id integer,
     artist_name text,
-    track_id text
-);
-
-
---
--- Name: tracks_extraartists_roles; Type: TABLE; Schema: public; Owner: -; Tablespace: 
---
-
-CREATE TABLE tracks_extraartists_roles (
-    track_id text,
-    artist_name text,
+    anv text,
     role_name text,
     role_details text
 );
@@ -272,8 +258,8 @@ CREATE TABLE master (
     main_release integer NOT NULL,
     year int,
     notes text,
-    genres text,
-    styles text,
+    genres text[],
+    styles text[],
     data_quality quality
 );
 
@@ -288,17 +274,6 @@ CREATE TABLE masters_artists (
     join_relation text,
     artist_id integer,
     master_id integer
-);
-
-
---
--- Name: masters_extraartists; Type: TABLE; Schema: public; Owner: -; Tablespace: 
---
-
-CREATE TABLE masters_extraartists (
-    master_id integer,
-    artist_name text,
-    roles text[]
 );
 
 
@@ -358,6 +333,38 @@ ALTER TABLE ONLY label
 
 ALTER TABLE ONLY release
     ADD CONSTRAINT release_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY release_identifier
+    ADD CONSTRAINT release_identifier_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY releases_artists
+    ADD CONSTRAINT releases_artists_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY releases_extraartists
+    ADD CONSTRAINT releases_extraartists_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY releases_formats
+    ADD CONSTRAINT releases_formats_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY releases_images
+    ADD CONSTRAINT releases_images_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY releases_labels
+    ADD CONSTRAINT releases_labels_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: track_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+--
+
+ALTER TABLE ONLY track
+    ADD CONSTRAINT track_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY tracks_artists
+    ADD CONSTRAINT tracks_artists_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY tracks_extraartists
+    ADD CONSTRAINT tracks_extraartists_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: master_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+--
+
+ALTER TABLE ONLY master
+    ADD CONSTRAINT master_pkey PRIMARY KEY (id);
 
 
 --
@@ -377,14 +384,6 @@ ALTER TABLE ONLY artists_images
 
 
 --
--- Name: foreign_did; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY releases_labels
-    ADD CONSTRAINT foreign_did FOREIGN KEY (release_id) REFERENCES release(id);
-
-
---
 -- Name: labels_images_image_uri_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -398,22 +397,6 @@ ALTER TABLE ONLY labels_images
 
 ALTER TABLE ONLY labels_images
     ADD CONSTRAINT labels_images_label_id_fkey FOREIGN KEY (label_id) REFERENCES label(id);
-
-
---
--- Name: releases_formats_release_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY releases_formats
-    ADD CONSTRAINT releases_formats_release_id_fkey FOREIGN KEY (release_id) REFERENCES release(id);
-
-
---
--- Name: releases_formats_format_name_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY releases_formats
-    ADD CONSTRAINT releases_formats_format_name_fkey FOREIGN KEY (format_name) REFERENCES format(name);
 
 
 --
@@ -433,14 +416,6 @@ ALTER TABLE ONLY releases_images
 
 
 --
--- Name: master_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
---
-
-ALTER TABLE ONLY master
-    ADD CONSTRAINT master_pkey PRIMARY KEY (id);
-
-
---
 -- Name: masters_images_master_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -453,6 +428,78 @@ ALTER TABLE ONLY masters_images
 
 ALTER TABLE ONLY masters_images
     ADD CONSTRAINT masters_images_image_uri_fkey FOREIGN KEY (image_uri) REFERENCES image(uri);
+
+
+--
+-- Name: release_identifier_release_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY release_identifier
+    ADD CONSTRAINT release_identifier_release_id_fkey FOREIGN KEY (release_id) REFERENCES release(id);
+
+
+--
+-- Name: releases_artists_release_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY releases_artists
+    ADD CONSTRAINT releases_artists_release_id_fkey FOREIGN KEY (release_id) REFERENCES release(id);
+
+
+--
+-- Name: releases_extraartists_release_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY releases_extraartists
+    ADD CONSTRAINT releases_extraartists_release_id_fkey FOREIGN KEY (release_id) REFERENCES release(id);
+
+
+--
+-- Name: releases_labels_release_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY releases_labels
+    ADD CONSTRAINT releases_labels_release_id_fkey FOREIGN KEY (release_id) REFERENCES release(id);
+
+
+--
+-- Name: releases_formats_release_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY releases_formats
+    ADD CONSTRAINT releases_formats_release_id_fkey FOREIGN KEY (release_id) REFERENCES release(id);
+
+
+--
+-- Name: releases_formats_format_name_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY releases_formats
+    ADD CONSTRAINT releases_formats_format_name_fkey FOREIGN KEY (format_name) REFERENCES format(name);
+
+
+--
+-- Name: track_release_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY track
+    ADD CONSTRAINT track_release_id_fkey FOREIGN KEY (release_id) REFERENCES release(id);
+
+
+--
+-- Name: tracks_artists_track_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY tracks_artists
+    ADD CONSTRAINT tracks_artists_track_id_fkey FOREIGN KEY (track_id) REFERENCES track(id);
+
+
+--
+-- Name: tracks_extraartists_track_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY tracks_extraartists
+    ADD CONSTRAINT tracks_extraartists_track_id_fkey FOREIGN KEY (track_id) REFERENCES track(id);
 
 
 --

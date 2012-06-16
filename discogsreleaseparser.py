@@ -129,10 +129,16 @@ class ReleaseHandler(xml.sax.handler.ContentHandler):
 			self.vid.embed = attrs["embed"]
 			self.vid.uri = attrs["src"]
 		elif name == "artist":
-			if 'track' in self.stack and 'extraartists' not in self.stack:
-				self.release.tracklist[-1].artists.append(model.ArtistCredit())
-			elif 'track' not in self.stack and 'extraartists' not in self.stack:
-				self.release.artists.append(model.ArtistCredit())
+			if 'track' in self.stack:
+				if 'extraartists' in self.stack:
+					self.release.tracklist[-1].extraartists.append(model.ArtistCredit())
+				else:
+					self.release.tracklist[-1].artists.append(model.ArtistCredit())
+			else:
+				if 'extraartists' in self.stack:
+					self.release.extraartists.append(model.ArtistCredit())
+				else:
+					self.release.artists.append(model.ArtistCredit())
 
 	def characters(self, data):
 		self.buffer += data
@@ -181,8 +187,11 @@ class ReleaseHandler(xml.sax.handler.ContentHandler):
 		elif name == 'id':
 			if len(self.buffer) != 0:
 				if 'extraartists' in self.stack:
-					pass
-				elif 'track' in self.stack and 'extraartists' not in self.stack:
+					if 'track' in self.stack:
+						self.release.tracklist[-1].extraartists[-1].id = int(self.buffer)
+					else:
+						self.release.extraartists[-1].id = int(self.buffer)
+				elif 'track' in self.stack:
 					self.release.tracklist[-1].artists[-1].id = int(self.buffer)
 				else:  # release artist
 					self.release.artists[-1].id = int(self.buffer)
@@ -190,27 +199,27 @@ class ReleaseHandler(xml.sax.handler.ContentHandler):
 			if len(self.buffer) != 0:
 				if 'extraartists' in self.stack:
 					if 'track' in self.stack:  # extraartist for track
-						track = self.release.tracklist[-1]
-						extr = model.Extraartist()
-						extr.name = self.buffer
-						track.extraartists.append(extr)
+						self.release.tracklist[-1].extraartists[-1].name = self.buffer
 					else:  # extraartists for release
-						extr = model.Extraartist()
-						extr.name = self.buffer
-						self.release.extraartists.append(extr)
-				elif 'track' in self.stack and 'extraartists' not in self.stack:
+						self.release.extraartists[-1].name = self.buffer
+				elif 'track' in self.stack:
 					self.release.tracklist[-1].artists[-1].name = self.buffer
 				else:  # release artist
 					self.release.artists[-1].name = self.buffer
 		elif name == 'anv':
 			if len(self.buffer) != 0:
-				if 'track' in self.stack and 'extraartists' not in self.stack:
+				if 'extraartists' in self.stack:
+					if 'track' in self.stack:  # extraartist for track
+						self.release.tracklist[-1].extraartists[-1].anv = self.buffer
+					else:  # extraartists for release
+						self.release.extraartists[-1].anv = self.buffer
+				elif 'track' in self.stack:
 					self.release.tracklist[-1].artists[-1].anv = self.buffer
-				elif self.stack[-3] == 'artists' and self.stack[-4] == 'release':
+				else:  # release artist
 					self.release.artists[-1].anv = self.buffer
 		elif name == 'join':
 			if len(self.buffer) != 0:
-				if 'track' in self.stack:  # extraartist
+				if 'track' in self.stack:
 					track = self.release.tracklist[-1]
 					if len(track.artists) > 0:  # fix for bug with release 2033428, track 3
 						track.artists[-1].join = self.buffer
@@ -235,7 +244,11 @@ class ReleaseHandler(xml.sax.handler.ContentHandler):
 							trackExtraartist = track.extraartists[-1]
 							trackExtraartist.roles.append(role)
 					else:
-						self.release.extraartists[-1].roles.append(role)
+						releaseExtraartist = self.release.extraartists[-1]
+						releaseExtraartist.roles.append(role)
+		elif name == 'tracks':
+			if 'extraartists' in self.stack and 'track' not in self.stack:
+				self.release.extraartists[-1].tracks = self.buffer
 		elif name == 'duration':
 			self.release.tracklist[-1].duration = self.buffer
 		elif name == 'position':

@@ -46,7 +46,6 @@ class PostgresExporter(object):
 		try:
 			self.conn = psycopg2.connect(connection_string)
 			self.cur = self.conn.cursor()
-			self.conn.set_isolation_level(0)
 		except psycopg2.Error, e:
 			print "%s" % (e.args)
 			sys.exit()
@@ -188,6 +187,9 @@ class PostgresExporter(object):
 				self.execute("INSERT INTO artists_images(image_uri, artist_id) VALUES(%s,%s);", (img.uri, artist.id))
 
 	def storeRelease(self, release):
+		# we do not store deleted
+		if release.status == 'Deleted':
+			return
 		if not self.good_quality(release):
 			return
 		values = []
@@ -278,15 +280,18 @@ class PostgresExporter(object):
 						(release.id, release.artists[0].name, release.artists[0].id, release.artists[0].anv, release.artists[0].join))
 
 		for extr in release.extraartists:
-			# decide whether to insert flattened composite roles or take the first one from the tuple
-			self.execute("INSERT INTO releases_extraartists(release_id, artist_name, roles) VALUES(%s,%s,%s);",
-					(release.id, extr.name, map(lambda x: x[0] if type(x) is tuple else x, extr.roles)))
-					#(release.id, extr.name, flatten(extr.roles)))
+			for role in extr.roles:
+				if type(role).__name__ == 'tuple':
+					self.execute("INSERT INTO releases_extraartists(release_id, artist_id, artist_name, anv, role_name, role_details, tracks) VALUES(%s,%s,%s,%s,%s,%s,%s);",
+							(release.id, extr.id, extr.name, extr.anv, role[0], role[1], extr.tracks))
+				else:
+					self.execute("INSERT INTO releases_extraartists(release_id, artist_id, artist_name, anv, role_name, tracks) VALUES(%s,%s,%s,%s,%s,%s);",
+							(release.id, extr.id, extr.name, extr.anv, role, extr.tracks))
 
 		for trk in release.tracklist:
-			trackid = str(uuid.uuid4())
-			self.execute("INSERT INTO track(release_id, title, duration, position, track_id) VALUES(%s,%s,%s,%s,%s);",
-					(release.id, trk.title, trk.duration, trk.position, trackid))
+			trackid = self.track_id
+			self.execute("INSERT INTO track(id, release_id, title, duration, position) VALUES(%s,%s,%s,%s,%s);",
+					(trackid, release.id, trk.title, trk.duration, trk.position))
 			for artist in trk.artists:
 				query = "INSERT INTO tracks_artists(track_id, artist_name, artist_id, anv, join_relation) VALUES(%s,%s,%s,%s,%s);"
 				self.execute(query, (trackid, artist.name, artist.id, artist.anv, artist.join))
@@ -294,18 +299,20 @@ class PostgresExporter(object):
 			for extr in trk.extraartists:
 				#print extr.name
 				#print extr.roles
-				self.execute("INSERT INTO tracks_extraartists(track_id, artist_name) VALUES(%s,%s);", (trackid, extr.name))
 				for role in extr.roles:
 					if type(role).__name__ == 'tuple':
 						#print trackid
 						#print extr.name
 						#print role[0]
 						#print role[1]
-						self.execute("INSERT INTO tracks_extraartists_roles(track_id, artist_name, role_name, role_details) VALUES(%s,%s,%s,%s);",
-								(trackid, extr.name, role[0], role[1]))
+						self.execute("INSERT INTO tracks_extraartists(track_id, artist_id, artist_name, anv, role_name, role_details) VALUES(%s,%s,%s,%s,%s,%s);",
+								(trackid, extr.id, extr.name, extr.anv, role[0], role[1]))
 					else:
-						self.execute("INSERT INTO tracks_extraartists_roles(track_id, artist_name, role_name) VALUES(%s,%s,%s);",
-								(trackid, extr.name, role))
+						self.execute("INSERT INTO tracks_extraartists(track_id, artist_id, artist_name, anv, role_name) VALUES(%s,%s,%s,%s,%s);",
+								(trackid, extr.id, extr.name, extr.anv, role))
+			self.track_id = trackid + 1
+		# commit after each release... makes execution faster
+		self.conn.commit()
 
 	def storeMaster(self, master):
 		if not self.good_quality(master):
@@ -382,11 +389,13 @@ class PostgresExporter(object):
 					(master.id, extr.name, map(lambda x: x[0] if type(x) is tuple else x, extr.roles)))
 					#(master.id, extr.name, flatten(extr.roles)))
 
+		# commit after each master... makes execution faster
+		self.conn.commit()
 
 class PostgresConsoleDumper(PostgresExporter):
 
-	def __init__(self, connection_string):
-		super(PostgresConsoleDumper, self).__init__(connection_string)
+	def __init__(self, connection_string, data_quality):
+		super(PostgresConsoleDumper, self).__init__(connection_string, data_quality)
 		self.q = lambda x: "'%s'" % x.replace("'", "\\'")
 
 	def connect(self, connection_string):
