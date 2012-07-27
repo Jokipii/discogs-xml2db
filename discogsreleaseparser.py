@@ -124,10 +124,11 @@ class ReleaseHandler(xml.sax.handler.ContentHandler):
 				identifier.description = attrs['description']
 			self.release.identifiers.append(identifier)
 		elif name == "video":
-			self.vid = model.Video()
-			self.vid.duration = attrs["duration"]
-			self.vid.embed = attrs["embed"]
-			self.vid.uri = attrs["src"]
+			vid = model.Video()
+			vid.duration = attrs["duration"]
+			vid.embed = attrs["embed"]
+			vid.uri = attrs["src"]
+			self.release.videos.append(vid)
 		elif name == "artist":
 			if 'track' in self.stack:
 				if 'extraartists' in self.stack:
@@ -153,6 +154,8 @@ class ReleaseHandler(xml.sax.handler.ContentHandler):
 					self.release.tracklist[-1].title = self.buffer
 				elif self.stack[-2] == 'release':
 					self.release.title = self.buffer
+				elif self.stack[-2] == 'video':
+					self.release.videos[-1].title = self.buffer
 		elif name == 'country':
 			if len(self.buffer) != 0:
 				self.release.country = self.buffer
@@ -178,6 +181,8 @@ class ReleaseHandler(xml.sax.handler.ContentHandler):
 			if len(self.buffer) != 0:
 				if 'formats' in self.stack:
 					self.release.formats[-1].descriptions.append(self.buffer)
+				elif self.stack[-1] == 'video':
+					self.release.videos[-1].description = self.buffer
 		elif name == 'data_quality':
 			if len(self.buffer) != 0:
 				self.release.data_quality = self.buffer

@@ -86,10 +86,11 @@ class MasterHandler(xml.sax.handler.ContentHandler):
 				print attrs
 				sys.exit()
 		elif name == "video":
-			self.vid = model.Video()
-			self.vid.duration = attrs["duration"]
-			self.vid.embed = attrs["embed"]
-			self.vid.uri = attrs["src"]
+			vid = model.Video()
+			vid.duration = attrs["duration"]
+			vid.embed = attrs["embed"]
+			vid.uri = attrs["src"]
+			self.master.videos.append(vid)
 		elif name == "artist":
 			self.master.artists.append(model.ArtistCredit())
 
@@ -102,6 +103,12 @@ class MasterHandler(xml.sax.handler.ContentHandler):
 			if len(self.buffer) != 0:
 				if self.stack[-2] == 'master':
 					self.master.title = self.buffer
+				if self.stack[-2] == 'video':
+					self.master.videos[-1].title = self.buffer
+		if name == 'description':
+			if len(self.buffer) != 0:
+				if self.stack[-2] == 'video':
+					self.master.videos[-1].description = self.buffer
 		elif name == 'main_release':
 			if len(self.buffer) != 0:
 				self.master.main_release = self.buffer
