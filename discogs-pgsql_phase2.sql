@@ -2,33 +2,106 @@
 
 
 
--- Because we havent enforced contraints when we added data in database we need some clearing here
-ALTER TABLE image ADD COLUMN id serial;
-ALTER TABLE labels_images ADD COLUMN id serial;
-ALTER TABLE artists_images ADD COLUMN id serial;
-ALTER TABLE masters_images ADD COLUMN id serial;
-ALTER TABLE releases_images ADD COLUMN id serial;
-
+-- Because we havent enforced contraints when we added data in database we need to do some clearing here
 WITH orig AS (SELECT uri, min(id) FROM image GROUP BY uri HAVING count(id) > 1)
 DELETE FROM image USING orig WHERE image.uri = orig.uri AND image.id <> orig.min;
 
-WITH orig AS (SELECT image_uri, min(id) FROM labels_images GROUP BY image_uri HAVING count(id) > 1)
-DELETE FROM labels_images USING orig WHERE labels_images.image_uri = orig.image_uri AND labels_images.id <> orig.min;
+WITH orig AS (
+	SELECT image_uri, label_id, min(id) FROM labels_images
+	GROUP BY image_uri, label_id HAVING count(id) > 1
+)
+DELETE FROM labels_images USING orig 
+	WHERE labels_images.image_uri = orig.image_uri
+	AND labels_images.id <> orig.min
+	AND labels_images.label_id = orig.label_id;
 
-WITH orig AS (SELECT image_uri, min(id) FROM artists_images GROUP BY image_uri HAVING count(id) > 1)
-DELETE FROM artists_images USING orig WHERE artists_images.image_uri = orig.image_uri AND artists_images.id <> orig.min;
+WITH orig AS (
+	SELECT image_uri, artist_id, min(id) FROM artists_images
+	GROUP BY image_uri, artist_id HAVING count(id) > 1
+)
+DELETE FROM artists_images USING orig
+	WHERE artists_images.image_uri = orig.image_uri
+	AND artists_images.id <> orig.min
+	AND artists_images.artist_id = orig.artist_id;
 
-WITH orig AS (SELECT image_uri, min(id) FROM masters_images GROUP BY image_uri HAVING count(id) > 1)
-DELETE FROM masters_images USING orig WHERE masters_images.image_uri = orig.image_uri AND masters_images.id <> orig.min;
+WITH orig AS (
+	SELECT image_uri, master_id, min(id) FROM masters_images
+	GROUP BY image_uri, master_id HAVING count(id) > 1
+)
+DELETE FROM masters_images USING orig
+	WHERE masters_images.image_uri = orig.image_uri	
+	AND masters_images.id <> orig.min
+	AND masters_images.master_id = orig.master_id;
 
-WITH orig AS (SELECT image_uri, min(id) FROM releases_images GROUP BY image_uri HAVING count(id) > 1)
-DELETE FROM releases_images USING orig WHERE releases_images.image_uri = orig.image_uri AND releases_images.id <> orig.min;
+WITH orig AS (
+	SELECT image_uri, release_id, min(id) FROM releases_images
+	GROUP BY image_uri, release_id HAVING count(id) > 1
+)
+DELETE FROM releases_images USING orig
+	WHERE releases_images.image_uri = orig.image_uri
+	AND releases_images.id <> orig.min
+	AND releases_images.release_id = orig.release_id;
 
-ALTER TABLE image DROP COLUMN id;
-ALTER TABLE labels_images DROP COLUMN id;
-ALTER TABLE artists_images DROP COLUMN id;
-ALTER TABLE masters_images DROP COLUMN id;
-ALTER TABLE releases_images DROP COLUMN id;
+WITH orig AS (SELECT uri, min(id) FROM video GROUP BY uri HAVING count(id) > 1)
+DELETE FROM video USING orig WHERE video.uri = orig.uri AND video.id <> orig.min;
+
+WITH orig AS (
+	SELECT video_uri, master_id, min(id) FROM master_video
+	GROUP BY video_uri, master_id HAVING count(id) > 1
+)
+DELETE FROM master_video USING orig
+	WHERE master_video.video_uri = orig.video_uri	
+	AND master_video.id <> orig.min
+	AND master_video.master_id = orig.master_id;
+
+WITH orig AS (
+	SELECT video_uri, release_id, min(id) FROM release_video
+	GROUP BY video_uri, release_id HAVING count(id) > 1
+)
+DELETE FROM release_video USING orig
+	WHERE release_video.video_uri = orig.video_uri
+	AND release_video.id <> orig.min
+	AND release_video.release_id = orig.release_id;
+
+--ALTER TABLE image DROP COLUMN id;
+--ALTER TABLE labels_images DROP COLUMN id;
+--ALTER TABLE artists_images DROP COLUMN id;
+--ALTER TABLE masters_images DROP COLUMN id;
+--ALTER TABLE releases_images DROP COLUMN id;
+--ALTER TABLE video DROP COLUMN id;
+--ALTER TABLE master_video DROP COLUMN id;
+--ALTER TABLE release_video DROP COLUMN id;
+
+
+
+-- update some data types and fields
+-- little weird way to do it is used here because more direct way causing out of memory error
+ALTER TABLE release ADD COLUMN genre_tmp genre[];
+UPDATE release SET genre_tmp = genres::genre[];
+ALTER TABLE release ALTER COLUMN genres SET DATA TYPE genre[] USING genre_tmp;
+ALTER TABLE release DROP COLUMN genre_tmp;
+
+ALTER TABLE master ADD COLUMN genre_tmp genre[];
+UPDATE master SET genre_tmp = genres::genre[];
+ALTER TABLE master ALTER COLUMN genres SET DATA TYPE genre[] USING genre_tmp;
+ALTER TABLE master DROP COLUMN genre_tmp;
+
+-- before setting releases_formats.format we need to ensure that format_name field have only correct values
+-- uncorrect values are moved to additional text description field and format_name is set to 'Unknown'
+UPDATE releases_formats SET text = format_name||text, format_name='Unknown' WHERE format_name <> ALL(array[
+	'Vinyl', 'Acetate', 'Flexi-disc', 'Lathe Cut', 'Shellac', 'Pathé Disc', 'Edison Disc', 
+	'Cylinder', 'CD', 'CDr', 'CDV', 'DVD', 'DVDr', 'HD DVD', 'HD DVD-R', 'Blu-ray', 
+	'Blu-ray-R', '4-Track Cartridge', '8-Track Cartridge', 'Cassette', 'DAT', 'DCC', 
+	'Microcassette', 'Reel-To-Reel', 'Betamax', 'VHS', 'Video 2000', 'Laserdisc', 
+	'SelectaVision', 'VHD', 'Minidisc', 'MVD', 'UMD', 'Floppy Disk', 'File', 
+	'Memory Stick', 'Hybrid', 'All Media', 'Box Set'
+]);
+UPDATE releases_formats SET format = format_name::format;
+ALTER TABLE releases_formats DROP COLUMN format_name;
+
+
+
+-- this might be good point to do VACUUM ANALYZE
 
 
 
@@ -58,9 +131,12 @@ ALTER TABLE ONLY masters_images ADD CONSTRAINT masters_images_pkey PRIMARY KEY (
 ALTER TABLE ONLY releases_images ADD CONSTRAINT releases_images_pkey PRIMARY KEY (release_id, image_uri);
 ALTER TABLE ONLY artists_images ADD CONSTRAINT artists_images_pkey PRIMARY KEY (artist_id, image_uri);
 
+ALTER TABLE ONLY video ADD CONSTRAINT video_pkey PRIMARY KEY (uri);
+ALTER TABLE ONLY master_video ADD CONSTRAINT master_video_pkey PRIMARY KEY (master_id, video_uri);
+ALTER TABLE ONLY release_video ADD CONSTRAINT release_video_pkey PRIMARY KEY (release_id, video_uri);
 
 
---- foreign keys
+-- foreign keys
 ALTER TABLE ONLY releases_labels
 	ADD CONSTRAINT releases_labels_fk_release_id FOREIGN KEY (release_id) REFERENCES release(id);
 ALTER TABLE ONLY release_identifier
@@ -101,9 +177,17 @@ ALTER TABLE ONLY artists_images
 ALTER TABLE ONLY artists_images
 	ADD CONSTRAINT artists_images_fk_image_uri FOREIGN KEY (image_uri) REFERENCES image(uri);
 
+ALTER TABLE ONLY master_video
+	ADD CONSTRAINT master_video_fk_master_id FOREIGN KEY (master_id) REFERENCES master(id);
+ALTER TABLE ONLY master_video
+	ADD CONSTRAINT master_video_fk_video_uri FOREIGN KEY (video_uri) REFERENCES video(uri);
+ALTER TABLE ONLY release_video
+	ADD CONSTRAINT release_video_fk_release_id FOREIGN KEY (release_id) REFERENCES release(id);
+ALTER TABLE ONLY release_video
+	ADD CONSTRAINT release_video_fk_video_uri FOREIGN KEY (video_uri) REFERENCES video(uri);
 
 
---- indexes
+-- indexes
 CREATE INDEX releases_labels_idx_release_id ON releases_labels USING btree (release_id);
 CREATE INDEX release_identfier_idx_release_id ON release_identifier USING btree (release_id);
 CREATE INDEX releases_formats_idx_release_id ON releases_formats USING btree (release_id);

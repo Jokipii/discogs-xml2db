@@ -1,4 +1,4 @@
-SET client_encoding = 'UTF8';
+﻿SET client_encoding = 'UTF8';
 SET standard_conforming_strings = off;
 SET check_function_bodies = false;
 SET client_min_messages = warning;
@@ -17,44 +17,47 @@ SET search_path = discogs;
 
 -- Type for quality
 CREATE TYPE quality AS ENUM (
-	'Entirely Incorrect',
-	'Needs Vote',
-	'Needs Major Changes',
-	'Needs Minor Changes',
-	'Correct',
-	'Complete and Correct');
+	'Entirely Incorrect', 'Needs Vote', 'Needs Major Changes',
+	'Needs Minor Changes', 'Correct','Complete and Correct'
+);
 -- Type for status
 CREATE TYPE status AS ENUM ('Accepted', 'Draft', 'Deleted');
 -- Type for image type
 CREATE TYPE image_type AS ENUM ('primary', 'secondary');
 --- Type for genre
 CREATE TYPE genre AS ENUM (
-	'Non-Music',
-	'Blues',
-	'Funk / Soul',
-	'Folk, World, & Country',
-	'Rock',
-	'Classical',
-	'Brass & Military',
-	'Stage & Screen',
-	'Latin',
-	'Hip Hop',
-	'Pop',
-	'Jazz',
-	'Reggae',
-	'Children''s',
+	'Non-Music', 'Blues', 'Funk / Soul', 'Folk, World, & Country',
+	'Rock', 'Classical', 'Brass & Military', 'Stage & Screen',
+	'Latin', 'Hip Hop', 'Pop', 'Jazz', 'Reggae', 'Children''s',
 	'Electronic'
 );
 -- Type for release_identifier type
 CREATE TYPE identifier_type AS ENUM (
-	'Matrix / Runout',
-	'Asin',
-	'Other',
-	'Barcode',
-	'Rights Society',
-	'Label Code'
+	'Matrix / Runout', 'Asin', 'Other', 'Barcode',
+	'Rights Society', 'Label Code'
 );
-
+-- Type for format
+CREATE TYPE format AS ENUM (
+	'Vinyl', 'Acetate', 'Flexi-disc', 'Lathe Cut', 'Shellac', 'Pathé Disc', 'Edison Disc', 
+	'Cylinder', 'CD', 'CDr', 'CDV', 'DVD', 'DVDr', 'HD DVD', 'HD DVD-R', 'Blu-ray', 
+	'Blu-ray-R', '4-Track Cartridge', '8-Track Cartridge', 'Cassette', 'DAT', 'DCC', 
+	'Microcassette', 'Reel-To-Reel', 'Betamax', 'VHS', 'Video 2000', 'Laserdisc', 
+	'SelectaVision', 'VHD', 'Minidisc', 'MVD', 'UMD', 'Floppy Disk', 'File', 
+	'Memory Stick', 'Hybrid', 'All Media', 'Box Set', 'Unknown'
+);
+CREATE TYPE description AS ENUM (
+	'LP', '16"', '12"', '12"', '11"', '10"', '9"', '8"', '8"', '7"', '6½"', '6"', '5½"', '5"', '5"', '4"', 
+	'16 ⅔ RPM', '33 ⅓ RPM', '45 RPM', '78 RPM', '21cm', '25cm', '27cm', '29cm', '35cm', '50cm', '80 RPM', '90 RPM', 
+	'1 ⅞ ips', '3 ¾ ips', '7 ½ ips', '15 ips', '30 ips', '⅛"', '¼"', '½"', '2 Minute', '4 Minute', 
+	'Concert', 'Salon', 'Mini', 'Mini', 'Business Card', 'Shape', 'Shape', 'Minimax', 'Minimax', 
+	'CD-ROM', 'CDi', 'CD+G', 'HDCD', 'SACD', 'VCD', 'AVCD', 'SVCD', 'DVD-Audio', 'DVD-Data', 'DVD-Video', 
+	'AAC', 'AIFC', 'AIFF', 'ALAC', 'FLAC', 'FLV', 'MP3', 'MPEG-4 Video', 'ogg-vorbis', 'SWF', 'WAV', 'WMA', 
+	'WMV', 'MP3 Surround', '3.5"', '5.25"', 'DualDisc', 'DVDplus', 'VinylDisc ', 'Card Backed', 'Double Sided', 
+	'Etched', 'Picture Disc', 'Single Sided', 'Album', 'Mini-Album', 'EP', 'Maxi-Single', 'Single', 'Compilation', 
+	'Stereo', 'Mono', 'Quadraphonic', 'Ambisonic', 'Enhanced', 'Limited Edition', 'Mispress', 'Misprint', 'Reissue', 
+	'Remastered', 'Repress', 'Test Pressing', 'Promo', 'White Label', 'Mixed', 'Partially Mixed', 
+	'Unofficial Release', 'Partially Unofficial', 'Sampler', 'Copy Protected', 'Multichannel', 'NTSC', 'PAL', 'SECAM'
+)
 
 
 --- label
@@ -70,6 +73,7 @@ CREATE TABLE label (
 );
 
 -- master
+-- final type for genres is genre[]
 CREATE TABLE master (
 	id integer NOT NULL,
 	main_release integer NOT NULL,
@@ -81,19 +85,8 @@ CREATE TABLE master (
 	data_quality quality
 );
 
---- style
-CREATE TABLE style (
-	id serial NOT NULL,
-	name character varying(32) NOT NULL
-);
-
---- format
-CREATE TABLE format (
-	id serial NOT NULL,
-	name character varying(32) NOT NULL
-);
-
---- release
+-- release
+-- final type for genres is genre[]
 CREATE TABLE release (
 	id integer NOT NULL,
 	status status,
@@ -122,11 +115,13 @@ CREATE TABLE release_identifier (
 	description text
 );
 
+-- format_name is only for temporary use and dropped from final database after actual format field is set
 CREATE TABLE releases_formats (
 	id serial NOT NULL,
 	release_id integer NOT NULL,
 	qty integer,
-	format_name character varying(32),
+	format_name character varying(32), 
+    format format,
 	descriptions character varying(32)[],
 	text text
 );
