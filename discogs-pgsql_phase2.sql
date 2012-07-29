@@ -199,3 +199,43 @@ CREATE INDEX tracks_artists_idx_track_id ON tracks_artists USING btree (track_id
 CREATE INDEX releases_extraartists_idx_release_id ON releases_extraartists USING btree (release_id);
 CREATE INDEX tracks_extraartists_idx_track_id ON tracks_extraartists USING btree (track_id);
 
+CREATE UNIQUE INDEX label_idx_lower_name ON label USING btree (lower(name));
+
+
+
+-- finalize artist
+-- there are some artists on errorous state where name (www-page) and api gives different entity
+-- removing those gives us unique name index, we also include some special purpose artists which
+-- are not included in XML export, last artist pointers that are not found in XML export updated
+-- to point 'unknown artist'
+DELETE FROM artist WHERE id = 455231;
+DELETE FROM artist WHERE id = 1884533;
+DELETE FROM artist WHERE id = 2159541;
+DELETE FROM artist WHERE id = 2808461;
+DELETE FROM artist WHERE id = 1360244;
+DELETE FROM artist WHERE id = 1882549;
+DELETE FROM artist WHERE id = 2443724;
+DELETE FROM artist WHERE id = 2159540;
+DELETE FROM artist WHERE id = 2036271;
+DELETE FROM artist WHERE id = 1955085;
+INSERT INTO artist(id, name) VALUES (194, 'various');
+INSERT INTO artist(id, name) VALUES (355, 'unknown artist');
+INSERT INTO artist(id, name) VALUES (118760, 'no artist');
+CREATE UNIQUE INDEX artist_idx_lower_name ON artist USING btree (lower(name));
+UPDATE releases_artists SET artist_id = 355 WHERE NOT EXISTS (SELECT id FROM artist WHERE id = releases_artists.artist_id);
+UPDATE releases_extraartists SET artist_id = 355
+	WHERE NOT role_name = ANY(array['Artwork By','Photography','Other','Executive Producer','Written By'])
+	AND NOT EXISTS (SELECT id FROM artist WHERE id = releases_extraartists.artist_id);
+UPDATE tracks_artists SET artist_id = 355 WHERE NOT EXISTS (SELECT id FROM artist WHERE id = tracks_artists.artist_id);
+UPDATE tracks_extraartists SET artist_id = 355
+	WHERE NOT role_name = ANY(array['Artwork By','Photography','Other','Executive Producer','Written By'])
+	AND NOT EXISTS (SELECT id FROM artist WHERE id = tracks_extraartists.artist_id);
+
+
+-- finalize releases_labels
+-- function lower is used because otherwise over 38000 labels don't get they id's
+UPDATE releases_labels SET label_id = label.id FROM label WHERE lower(releases_labels.label) = lower(label.name);
+DELETE FROM releases_labels WHERE label_id ISNULL;
+ALTER TABLE releases_labels DROP COLUMN label;
+CREATE INDEX releases_labels_idx_label_id ON releases_labels USING btree(label_id);
+

@@ -41,9 +41,9 @@ Start by downloading and extracting the data dumps (you can use `get_latest_dump
 Steps to import the data-dumps into PostgreSQL:
 
 1. Create the empty database: `createdb -U {user-name} discogs`
-2. Import the database schema: `psql -U {user-name} -d discogs -f discogs.sql`
-3. The XML data dumps often contain control characters and do not have root tags. To fix this run `fix-xml.py _release_`, where release is the release date of the dump, for example `20100201`.
-4. Finally import the data with `python discogsparser.py -o pgsql -p "dbname=discogs" pgsql _release_`, where release is the release date of the dump, for example `20100201`
+2. Import the database schema: `psql -U {user-name} -d discogs -f discogs-pgsql.sql`
+3. Import the data with `python discogsparser.py -o pgsql -p "dbname=discogs" -d {release_data}`, where release_date is the release date of the dump, for example `20100201`
+4. Finally create primary keys, foreing keys and indexes in database: `psql -U {user-name} -d discogs -f discogs-pgsql_phase2.sql`
 
 To import data into MongoDB you have two choices: direct import or dumping the records to JSON and then using `mongoimport`. The latter is considerably faster, particularly for the initial import.
 

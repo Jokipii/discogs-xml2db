@@ -100,9 +100,11 @@ CREATE TABLE release (
 	data_quality quality
 );
 
+-- label field is only for temporary use and dropped from final database after actual label_id field is set
 CREATE TABLE releases_labels (
 	id serial NOT NULL,
 	release_id integer NOT NULL,
+    label_id integer,
 	label text,
 	catno character varying(256)
 );
