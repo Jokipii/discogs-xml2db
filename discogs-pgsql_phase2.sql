@@ -108,8 +108,6 @@ ALTER TABLE releases_formats DROP COLUMN format_name;
 -- primary keys
 ALTER TABLE ONLY label ADD CONSTRAINT label_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY master ADD CONSTRAINT master_pkey PRIMARY KEY (id);
-ALTER TABLE ONLY style ADD CONSTRAINT style_pkey PRIMARY KEY (id);
-ALTER TABLE ONLY format ADD CONSTRAINT format_pkey PRIMARY KEY (id);
 
 ALTER TABLE ONLY release ADD CONSTRAINT release_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY releases_labels ADD CONSTRAINT releases_labels_pkey PRIMARY KEY (id);
@@ -143,8 +141,6 @@ ALTER TABLE ONLY release_identifier
 	ADD CONSTRAINT release_identifier_fk_release_id FOREIGN KEY (release_id) REFERENCES release(id);
 ALTER TABLE ONLY releases_formats
 	ADD CONSTRAINT releases_formats_fk_release_id FOREIGN KEY (release_id) REFERENCES release(id);
-ALTER TABLE ONLY releases_formats
-	ADD CONSTRAINT releases_formats_fk_format_name FOREIGN KEY (format_name) REFERENCES format(name);
 
 ALTER TABLE ONLY track
 	ADD CONSTRAINT track_fk_release_id FOREIGN KEY (release_id) REFERENCES release(id);
@@ -204,24 +200,40 @@ CREATE UNIQUE INDEX label_idx_lower_name ON label USING btree (lower(name));
 
 
 -- finalize artist
+
 -- there are some artists on errorous state where name (www-page) and api gives different entity
--- removing those gives us unique name index, we also include some special purpose artists which
--- are not included in XML export, last artist pointers that are not found in XML export updated
--- to point 'unknown artist'
-DELETE FROM artist WHERE id = 455231;
-DELETE FROM artist WHERE id = 1884533;
-DELETE FROM artist WHERE id = 2159541;
-DELETE FROM artist WHERE id = 2808461;
-DELETE FROM artist WHERE id = 1360244;
-DELETE FROM artist WHERE id = 1882549;
-DELETE FROM artist WHERE id = 2443724;
-DELETE FROM artist WHERE id = 2159540;
-DELETE FROM artist WHERE id = 2036271;
-DELETE FROM artist WHERE id = 1955085;
+-- removing those gives us unique name index
+DELETE FROM artist WHERE id = ANY(ARRAY[455231,1884533,2159541,2808461,1360244,1882549,2443724,2159540,2036271,1955085])
+-- unfortunately problem is even worse than last time
+-- xml 20121001 contains more errorous entries even problem is reported to Discogs maintenance last time
+-- here is queries that find those
+/*
+SELECT lower(name) FROM artist GROUP BY lower(name) HAVING count(id) > 1;
+SELECT * FROM artist WHERE lower(name) = ANY(ARRAY['3 doors down','afroman','atc','bicep',
+	'bob leaper','city high','craig david','crossover','destiny''s child','dido','eve','five',
+	'gabrielle','gorgoroth','human nature','i-f','incubus','jamiroquai','jennifer lopez','jessica simpson',
+	'joanne','joy enriquez','kurupt','leah haywood','lou bega','mandy moore','mya','nelly furtado',
+	'nikki webster','outkast','pink','r-zone','ricky martin','ronan keating','s club 7','sara','selwyn',
+	'something for kate','stella one eleven','u2','vanessa amorosi','weezer','westlife','ϟ†nϟ']) ORDER BY name;
+SELECT * FROM artist WHERE id = ANY(ARRAY[2937013,2844767,2844786,2844765,2883709,2844772,2844776,2940656,2844766,
+2844774,2844792,2844791,2844796,2940659,2844784,2940658,2844801,2844788,2844789,2844781,2844785,2844800,2844779,
+2844773,2844799,2844770,2844775,2844787,2844793,2844790,2844795,2937014,2844768,2844802,2844782,2844780,2844798,
+2844769,2844797,2844783,2844771,2844778,2844794,2940657]);
+*/
+-- and remove errorous entries
+DELETE FROM artist WHERE id = ANY(ARRAY[2937013,2844767,2844786,2844765,2883709,2844772,2844776,2940656,2844766,
+2844774,2844792,2844791,2844796,2940659,2844784,2940658,2844801,2844788,2844789,2844781,2844785,2844800,2844779,
+2844773,2844799,2844770,2844775,2844787,2844793,2844790,2844795,2937014,2844768,2844802,2844782,2844780,2844798,
+2844769,2844797,2844783,2844771,2844778,2844794,2940657]);
+
+-- we also include some special purpose artists which are not included in XML export
 INSERT INTO artist(id, name) VALUES (194, 'various');
 INSERT INTO artist(id, name) VALUES (355, 'unknown artist');
 INSERT INTO artist(id, name) VALUES (118760, 'no artist');
+-- and now we can create index
 CREATE UNIQUE INDEX artist_idx_lower_name ON artist USING btree (lower(name));
+
+-- last artist pointers that are not found in XML export updated to point 'unknown artist'
 UPDATE releases_artists SET artist_id = 355 WHERE NOT EXISTS (SELECT id FROM artist WHERE id = releases_artists.artist_id);
 UPDATE releases_extraartists SET artist_id = 355
 	WHERE NOT role_name = ANY(array['Artwork By','Photography','Other','Executive Producer','Written By'])

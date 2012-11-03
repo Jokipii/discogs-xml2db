@@ -107,6 +107,7 @@ class ReleaseHandler(xml.sax.handler.ContentHandler):
 			if attrs.has_key('text'):
 				fmt.text = attrs['text']
 			fmt.qty = attrs['qty']
+			if not fmt.qty: fmt.qty = 0
 			self.release.formats.append(fmt)
 			#global formats
 			#if not formats.has_key(attrs["name"]):

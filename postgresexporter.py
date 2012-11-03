@@ -297,7 +297,7 @@ class PostgresExporter(object):
 		queryAta = "EXECUTE add_track_artist(%s,%s,%s,%s,%s);"
 		queryAtea = "EXECUTE add_track_extraartist(%s,%s,%s,%s,%s,%s);"
 		for trk in release.tracklist:
-			self.execute(query, (release.id, trk.title, trk.duration, trk.position))
+			self.execute(query, (release.id, trk.title, trk.duration[:10], trk.position))
 			trackid = self.cur.fetchone()
 			for artist in trk.artists:
 				self.execute(queryAta, (trackid, artist.id, artist.name, artist.anv, artist.join))
@@ -308,8 +308,8 @@ class PostgresExporter(object):
 						self.execute(queryAtea,	(trackid, extr.id, extr.name, extr.anv, role[0], role[1]))
 					else:
 						self.execute(queryAtea,	(trackid, extr.id, extr.name, extr.anv, role, None))
-		# commit after 500 release...
-		if self.count == 500:
+		# commit after 100 release...
+		if self.count == 100:
 			self.conn.commit()
 			self.count = 0
 		else:

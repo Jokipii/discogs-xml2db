@@ -46,10 +46,10 @@ CREATE TYPE format AS ENUM (
 	'Memory Stick', 'Hybrid', 'All Media', 'Box Set', 'Unknown'
 );
 CREATE TYPE description AS ENUM (
-	'LP', '16"', '12"', '12"', '11"', '10"', '9"', '8"', '8"', '7"', '6½"', '6"', '5½"', '5"', '5"', '4"', 
+	'LP', '16"', '12"', '11"', '10"', '9"', '8"', '7"', '6½"', '6"', '5½"', '5"', '4"', 
 	'16 ⅔ RPM', '33 ⅓ RPM', '45 RPM', '78 RPM', '21cm', '25cm', '27cm', '29cm', '35cm', '50cm', '80 RPM', '90 RPM', 
 	'1 ⅞ ips', '3 ¾ ips', '7 ½ ips', '15 ips', '30 ips', '⅛"', '¼"', '½"', '2 Minute', '4 Minute', 
-	'Concert', 'Salon', 'Mini', 'Mini', 'Business Card', 'Shape', 'Shape', 'Minimax', 'Minimax', 
+	'Concert', 'Salon', 'Mini', 'Business Card', 'Shape', 'Minimax', 
 	'CD-ROM', 'CDi', 'CD+G', 'HDCD', 'SACD', 'VCD', 'AVCD', 'SVCD', 'DVD-Audio', 'DVD-Data', 'DVD-Video', 
 	'AAC', 'AIFC', 'AIFF', 'ALAC', 'FLAC', 'FLV', 'MP3', 'MPEG-4 Video', 'ogg-vorbis', 'SWF', 'WAV', 'WMA', 
 	'WMV', 'MP3 Surround', '3.5"', '5.25"', 'DualDisc', 'DVDplus', 'VinylDisc ', 'Card Backed', 'Double Sided', 
@@ -57,7 +57,7 @@ CREATE TYPE description AS ENUM (
 	'Stereo', 'Mono', 'Quadraphonic', 'Ambisonic', 'Enhanced', 'Limited Edition', 'Mispress', 'Misprint', 'Reissue', 
 	'Remastered', 'Repress', 'Test Pressing', 'Promo', 'White Label', 'Mixed', 'Partially Mixed', 
 	'Unofficial Release', 'Partially Unofficial', 'Sampler', 'Copy Protected', 'Multichannel', 'NTSC', 'PAL', 'SECAM'
-)
+);
 
 
 --- label
