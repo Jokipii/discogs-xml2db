@@ -36,7 +36,7 @@ CREATE TYPE identifier_type AS ENUM (
 	'Matrix / Runout', 'Asin', 'Other', 'Barcode',
 	'Rights Society', 'Label Code'
 );
--- Type for format
+-- Type for format (types form www.discogs.com/help/formatslist with additional type 'Unknown')
 CREATE TYPE format AS ENUM (
 	'Vinyl', 'Acetate', 'Flexi-disc', 'Lathe Cut', 'Shellac', 'Pathé Disc', 'Edison Disc', 
 	'Cylinder', 'CD', 'CDr', 'CDV', 'DVD', 'DVDr', 'HD DVD', 'HD DVD-R', 'Blu-ray', 
@@ -45,6 +45,7 @@ CREATE TYPE format AS ENUM (
 	'SelectaVision', 'VHD', 'Minidisc', 'MVD', 'UMD', 'Floppy Disk', 'File', 
 	'Memory Stick', 'Hybrid', 'All Media', 'Box Set', 'Unknown'
 );
+-- Descriptions from www.discogs.com/help/formatslist
 CREATE TYPE description AS ENUM (
 	'LP', '16"', '12"', '11"', '10"', '9"', '8"', '7"', '6½"', '6"', '5½"', '5"', '4"', 
 	'16 ⅔ RPM', '33 ⅓ RPM', '45 RPM', '78 RPM', '21cm', '25cm', '27cm', '29cm', '35cm', '50cm', '80 RPM', '90 RPM', 

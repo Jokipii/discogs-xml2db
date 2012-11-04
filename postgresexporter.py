@@ -151,8 +151,8 @@ class PostgresExporter(object):
 		values.append(artist.namevariations)
 		values.append(artist.aliases)
 		values.append(artist.profile)
-		values.append(artist.groups)
 		values.append(artist.members)
+		values.append(artist.groups)
 		values.append(artist.data_quality)
 
 		query = "EXECUTE add_artist(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);"
