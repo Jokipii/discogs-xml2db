@@ -19,11 +19,6 @@ import xml.sax
 import os
 import sys
 import model
-#import psyco
-#psyco.full()
-
-artistCounter = 0
-
 
 class ArtistHandler(xml.sax.handler.ContentHandler):
 	inElement = {
@@ -48,10 +43,10 @@ class ArtistHandler(xml.sax.handler.ContentHandler):
 	unknown_tags = []
 
 	def __init__(self, exporter, stop_after=0, ignore_missing_tags=False):
-		self.artist = model.Artist()
 		self.exporter = exporter
 		self.stop_after = stop_after
 		self.ignore_missing_tags = ignore_missing_tags
+		self.artistCounter = 0
 
 	def startElement(self, name, attrs):
 		if not name in self.inElement:
@@ -61,7 +56,6 @@ class ArtistHandler(xml.sax.handler.ContentHandler):
 			elif not name in self.unknown_tags:
 				self.unknown_tags.append(name)
 		self.inElement[name] = True
-
 		if name == "artist":
 			self.artist = model.Artist()
 		elif name == "image":
@@ -115,8 +109,7 @@ class ArtistHandler(xml.sax.handler.ContentHandler):
 
 			if self.artist.name:
 				self.exporter.storeArtist(self.artist)
-				global artistCounter
-				artistCounter += 1
+				self.artistCounter += 1
 				if self.stop_after > 0 and artistCounter >= self.stop_after:
 					self.endDocument()
 					if self.ignore_missing_tags and len(self.unknown_tags) > 0:

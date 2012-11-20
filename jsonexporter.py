@@ -14,17 +14,10 @@ def jsonizer(obj, specify_object_type = True):
 
 
 class JsonConsoleExporter:
-	def __init__(self, params, data_quality=[]):
-		self.min_data_quality = data_quality
+	def __init__(self, params):
+		pass
 	
-	def good_quality(self, what):
-		if len(self.min_data_quality):
-			return what.data_quality.lower() in self.min_data_quality
-		return True
-
 	def dump(self, what):
-		if not self.good_quality(what):
-			return
 		j = self._store(what)
 		print j
 		

@@ -1,78 +1,18 @@
 ﻿SET search_path = discogs;
 
 
-
 -- Because we havent enforced contraints when we added data in database we need to do some clearing here
-WITH orig AS (SELECT uri, min(id) FROM image GROUP BY uri HAVING count(id) > 1)
-DELETE FROM image USING orig WHERE image.uri = orig.uri AND image.id <> orig.min;
-
-WITH orig AS (
-	SELECT image_uri, label_id, min(id) FROM labels_images
-	GROUP BY image_uri, label_id HAVING count(id) > 1
-)
-DELETE FROM labels_images USING orig 
-	WHERE labels_images.image_uri = orig.image_uri
-	AND labels_images.id <> orig.min
-	AND labels_images.label_id = orig.label_id;
-
-WITH orig AS (
-	SELECT image_uri, artist_id, min(id) FROM artists_images
-	GROUP BY image_uri, artist_id HAVING count(id) > 1
-)
-DELETE FROM artists_images USING orig
-	WHERE artists_images.image_uri = orig.image_uri
-	AND artists_images.id <> orig.min
-	AND artists_images.artist_id = orig.artist_id;
-
-WITH orig AS (
-	SELECT image_uri, master_id, min(id) FROM masters_images
-	GROUP BY image_uri, master_id HAVING count(id) > 1
-)
-DELETE FROM masters_images USING orig
-	WHERE masters_images.image_uri = orig.image_uri	
-	AND masters_images.id <> orig.min
-	AND masters_images.master_id = orig.master_id;
-
-WITH orig AS (
-	SELECT image_uri, release_id, min(id) FROM releases_images
-	GROUP BY image_uri, release_id HAVING count(id) > 1
-)
-DELETE FROM releases_images USING orig
-	WHERE releases_images.image_uri = orig.image_uri
-	AND releases_images.id <> orig.min
-	AND releases_images.release_id = orig.release_id;
-
-WITH orig AS (SELECT uri, min(id) FROM video GROUP BY uri HAVING count(id) > 1)
-DELETE FROM video USING orig WHERE video.uri = orig.uri AND video.id <> orig.min;
-
-WITH orig AS (
-	SELECT video_uri, master_id, min(id) FROM master_video
-	GROUP BY video_uri, master_id HAVING count(id) > 1
-)
-DELETE FROM master_video USING orig
-	WHERE master_video.video_uri = orig.video_uri	
-	AND master_video.id <> orig.min
-	AND master_video.master_id = orig.master_id;
-
-WITH orig AS (
-	SELECT video_uri, release_id, min(id) FROM release_video
-	GROUP BY video_uri, release_id HAVING count(id) > 1
-)
-DELETE FROM release_video USING orig
-	WHERE release_video.video_uri = orig.video_uri
-	AND release_video.id <> orig.min
-	AND release_video.release_id = orig.release_id;
-
---ALTER TABLE image DROP COLUMN id;
---ALTER TABLE labels_images DROP COLUMN id;
---ALTER TABLE artists_images DROP COLUMN id;
---ALTER TABLE masters_images DROP COLUMN id;
---ALTER TABLE releases_images DROP COLUMN id;
---ALTER TABLE video DROP COLUMN id;
---ALTER TABLE master_video DROP COLUMN id;
---ALTER TABLE release_video DROP COLUMN id;
-
-
+SELECT DISTINCT * INTO label_image FROM labels_images;
+SELECT DISTINCT * INTO artist_image FROM artists_images;
+SELECT DISTINCT * INTO master_image FROM masters_images;
+SELECT DISTINCT * INTO release_image FROM releases_images;
+SELECT DISTINCT * INTO images FROM image;
+DROP TABLE artists_images;
+DROP TABLE labels_images;
+DROP TABLE masters_images;
+DROP TABLE releases_images;
+DROP TABLE image;
+ALTER TABLE images RENAME TO image;
 
 -- update some data types and fields
 -- little weird way to do it is used here because more direct way causing out of memory error
@@ -88,7 +28,7 @@ ALTER TABLE master DROP COLUMN genre_tmp;
 
 -- before setting releases_formats.format we need to ensure that format_name field have only correct values
 -- uncorrect values are moved to additional text description field and format_name is set to 'Unknown'
-UPDATE releases_formats SET text = format_name||text, format_name='Unknown' WHERE format_name <> ALL(array[
+UPDATE releases_formats SET text = format_name||' '||text, format_name='Unknown' WHERE format_name <> ALL(array[
 	'Vinyl', 'Acetate', 'Flexi-disc', 'Lathe Cut', 'Shellac', 'Pathé Disc', 'Edison Disc', 
 	'Cylinder', 'CD', 'CDr', 'CDV', 'DVD', 'DVDr', 'HD DVD', 'HD DVD-R', 'Blu-ray', 
 	'Blu-ray-R', '4-Track Cartridge', '8-Track Cartridge', 'Cassette', 'DAT', 'DCC', 
@@ -100,8 +40,22 @@ UPDATE releases_formats SET format = format_name::format;
 ALTER TABLE releases_formats DROP COLUMN format_name;
 
 
+-- id fields for speed reasons they are not used in import time
+ALTER TABLE releases_labels ADD COLUMN id serial NOT NULL;
+ALTER TABLE release_identifier ADD COLUMN id serial NOT NULL;
+ALTER TABLE releases_formats ADD COLUMN id serial NOT NULL;
+ALTER TABLE masters_artists ADD COLUMN id serial NOT NULL;
+ALTER TABLE releases_artists ADD COLUMN id serial NOT NULL;
+ALTER TABLE tracks_artists ADD COLUMN id serial NOT NULL;
+ALTER TABLE releases_extraartists ADD COLUMN id serial NOT NULL;
+ALTER TABLE tracks_extraartists ADD COLUMN id serial NOT NULL;
 
--- this might be good point to do VACUUM ANALYZE
+-- set not null constraints
+ALTER TABLE label ALTER COLUMN id SET NOT NULL;
+ALTER TABLE master ALTER COLUMN id SET NOT NULL;
+ALTER TABLE release ALTER COLUMN id SET NOT NULL;
+ALTER TABLE track ALTER COLUMN id SET NOT NULL;
+ALTER TABLE artist ALTER COLUMN id SET NOT NULL;
 
 
 
@@ -124,10 +78,10 @@ ALTER TABLE ONLY releases_extraartists ADD CONSTRAINT releases_extraartists_pkey
 ALTER TABLE ONLY tracks_extraartists ADD CONSTRAINT tracks_extraartists_pkey PRIMARY KEY (id);
 
 ALTER TABLE ONLY image ADD CONSTRAINT image_pkey PRIMARY KEY (uri);
-ALTER TABLE ONLY labels_images ADD CONSTRAINT labels_images_pkey PRIMARY KEY (label_id, image_uri);
-ALTER TABLE ONLY masters_images ADD CONSTRAINT masters_images_pkey PRIMARY KEY (master_id, image_uri);
-ALTER TABLE ONLY releases_images ADD CONSTRAINT releases_images_pkey PRIMARY KEY (release_id, image_uri);
-ALTER TABLE ONLY artists_images ADD CONSTRAINT artists_images_pkey PRIMARY KEY (artist_id, image_uri);
+ALTER TABLE ONLY label_image ADD CONSTRAINT label_image_pkey PRIMARY KEY (label_id, image_uri);
+ALTER TABLE ONLY master_image ADD CONSTRAINT master_image_pkey PRIMARY KEY (master_id, image_uri);
+ALTER TABLE ONLY release_image ADD CONSTRAINT release_image_pkey PRIMARY KEY (release_id, image_uri);
+ALTER TABLE ONLY artist_image ADD CONSTRAINT artist_image_pkey PRIMARY KEY (artist_id, image_uri);
 
 ALTER TABLE ONLY video ADD CONSTRAINT video_pkey PRIMARY KEY (uri);
 ALTER TABLE ONLY master_video ADD CONSTRAINT master_video_pkey PRIMARY KEY (master_id, video_uri);
@@ -156,22 +110,22 @@ ALTER TABLE ONLY releases_extraartists
 ALTER TABLE ONLY tracks_extraartists
 	ADD CONSTRAINT tracks_extraartists_fk_track_id FOREIGN KEY (track_id) REFERENCES track(id);
 
-ALTER TABLE ONLY labels_images
-	ADD CONSTRAINT labels_images_fk_label_id FOREIGN KEY (label_id) REFERENCES label(id);
-ALTER TABLE ONLY labels_images
-	ADD CONSTRAINT labels_images_fk_image_uri FOREIGN KEY (image_uri) REFERENCES image(uri);
-ALTER TABLE ONLY masters_images
-	ADD CONSTRAINT masters_images_fk_master_id FOREIGN KEY (master_id) REFERENCES master(id);
-ALTER TABLE ONLY masters_images
-	ADD CONSTRAINT masters_images_fk_image_uri FOREIGN KEY (image_uri) REFERENCES image(uri);
-ALTER TABLE ONLY releases_images
-	ADD CONSTRAINT releases_images_fk_release_id FOREIGN KEY (release_id) REFERENCES release(id);
-ALTER TABLE ONLY releases_images
-	ADD CONSTRAINT releases_images_fk_image_uri FOREIGN KEY (image_uri) REFERENCES image(uri);
-ALTER TABLE ONLY artists_images 
-	ADD CONSTRAINT artists_images_fk_artist_id FOREIGN KEY (artist_id) REFERENCES artist(id);
-ALTER TABLE ONLY artists_images
-	ADD CONSTRAINT artists_images_fk_image_uri FOREIGN KEY (image_uri) REFERENCES image(uri);
+ALTER TABLE ONLY label_image
+	ADD CONSTRAINT label_image_fk_label_id FOREIGN KEY (label_id) REFERENCES label(id);
+ALTER TABLE ONLY label_image
+	ADD CONSTRAINT label_image_fk_image_uri FOREIGN KEY (image_uri) REFERENCES image(uri);
+ALTER TABLE ONLY master_image
+	ADD CONSTRAINT master_image_fk_master_id FOREIGN KEY (master_id) REFERENCES master(id);
+ALTER TABLE ONLY master_image
+	ADD CONSTRAINT master_image_fk_image_uri FOREIGN KEY (image_uri) REFERENCES image(uri);
+ALTER TABLE ONLY release_image
+	ADD CONSTRAINT release_image_fk_release_id FOREIGN KEY (release_id) REFERENCES release(id);
+ALTER TABLE ONLY release_image
+	ADD CONSTRAINT release_image_fk_image_uri FOREIGN KEY (image_uri) REFERENCES image(uri);
+ALTER TABLE ONLY artist_image
+	ADD CONSTRAINT artist_image_fk_artist_id FOREIGN KEY (artist_id) REFERENCES artist(id);
+ALTER TABLE ONLY artist_image
+	ADD CONSTRAINT artist_image_fk_image_uri FOREIGN KEY (image_uri) REFERENCES image(uri);
 
 ALTER TABLE ONLY master_video
 	ADD CONSTRAINT master_video_fk_master_id FOREIGN KEY (master_id) REFERENCES master(id);
@@ -182,6 +136,8 @@ ALTER TABLE ONLY release_video
 ALTER TABLE ONLY release_video
 	ADD CONSTRAINT release_video_fk_video_uri FOREIGN KEY (video_uri) REFERENCES video(uri);
 
+ALTER TABLE releases_labels
+	ADD CONSTRAINT releases_labels_fk_label_id FOREIGN KEY (label_id) REFERENCES label(id);
 
 -- indexes
 CREATE INDEX releases_labels_idx_release_id ON releases_labels USING btree (release_id);
@@ -206,8 +162,8 @@ CREATE UNIQUE INDEX label_idx_lower_name ON label USING btree (lower(name));
 DELETE FROM artist WHERE id = ANY(ARRAY[455231,1884533,2159541,2808461,1360244,1882549,2443724,2159540,2036271,1955085])
 -- unfortunately problem is even worse than last time
 -- xml 20121001 contains more errorous entries even problem is reported to Discogs maintenance last time
--- here is queries that find those
 /*
+-- here is queries that find those
 SELECT lower(name) FROM artist GROUP BY lower(name) HAVING count(id) > 1;
 SELECT * FROM artist WHERE lower(name) = ANY(ARRAY['3 doors down','afroman','atc','bicep',
 	'bob leaper','city high','craig david','crossover','destiny''s child','dido','eve','five',
@@ -227,9 +183,9 @@ DELETE FROM artist WHERE id = ANY(ARRAY[2937013,2844767,2844786,2844765,2883709,
 2844769,2844797,2844783,2844771,2844778,2844794,2940657]);
 
 -- we also include some special purpose artists which are not included in XML export
-INSERT INTO artist(id, name) VALUES (194, 'various');
-INSERT INTO artist(id, name) VALUES (355, 'unknown artist');
-INSERT INTO artist(id, name) VALUES (118760, 'no artist');
+INSERT INTO artist(id, name) VALUES (194, 'Various');
+INSERT INTO artist(id, name) VALUES (355, 'Unknown Artist');
+INSERT INTO artist(id, name) VALUES (118760, 'No Artist');
 -- and now we can create index
 CREATE UNIQUE INDEX artist_idx_lower_name ON artist USING btree (lower(name));
 
@@ -251,3 +207,24 @@ DELETE FROM releases_labels WHERE label_id ISNULL;
 ALTER TABLE releases_labels DROP COLUMN label;
 CREATE INDEX releases_labels_idx_label_id ON releases_labels USING btree(label_id);
 
+-- set NULLs on fields that have empty strings
+UPDATE releases_extraartists SET tracks = NULL WHERE tracks = '';
+UPDATE releases_extraartists SET anv = NULL WHERE anv = '';
+UPDATE releases_artists SET anv = NULL WHERE anv = '';
+UPDATE releases_artists SET join_relation = NULL WHERE join_relation = '';
+UPDATE release_identifier SET description = NULL WHERE description = '';
+UPDATE releases_formats SET text = NULL WHERE text = '';
+UPDATE track SET duration = NULL WHERE duration = '';
+UPDATE track SET position = NULL WHERE position = '';
+UPDATE tracks_artists SET anv = NULL WHERE anv = '';
+UPDATE tracks_artists SET join_relation = NULL WHERE join_relation = '';
+UPDATE tracks_extraartists SET anv = NULL WHERE anv = '';
+UPDATE video SET description = NULL WHERE description = '';
+UPDATE release SET notes = NULL WHERE notes = '';
+UPDATE masters_artists SET anv = NULL WHERE anv = '';
+UPDATE masters_artists SET join_relation = NULL WHERE join_relation = '';
+UPDATE master SET notes = NULL WHERE notes = '';
+UPDATE label SET contactinfo = NULL WHERE contactinfo = '';
+UPDATE label SET profile = NULL WHERE profile = '';
+UPDATE label SET parent_label = NULL WHERE parent_label = '';
+UPDATE artist SET profile = NULL WHERE profile = '';

@@ -1,4 +1,4 @@
-#!/usr/bin/python
+﻿#!/usr/bin/python
 # -*- coding: utf-8 -*-
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,9 +19,6 @@ import xml.sax
 import sys
 import model
 import re
-
-releaseCounter = 0
-
 
 class ReleaseHandler(xml.sax.handler.ContentHandler):
 	def __init__(self, exporter, stop_after=0, ignore_missing_tags=False):
@@ -73,7 +70,7 @@ class ReleaseHandler(xml.sax.handler.ContentHandler):
 		self.stop_after = stop_after
 		self.ignore_missing_tags = ignore_missing_tags
 		self.stack = []
-		self.master = model.Master()
+		self.releaseCounter = 0
 
 	def startElement(self, name, attrs):
 		if not name in self.knownTags:
@@ -274,11 +271,10 @@ class ReleaseHandler(xml.sax.handler.ContentHandler):
 						self.release.artist += '%s %s ' % (j.name, j.join)
 					self.release.artist += self.release.artists[-1].name
 
-				global releaseCounter
-				releaseCounter += 1
+				self.releaseCounter += 1
+				
 				self.exporter.storeRelease(self.release)
-
-				releaseCounter += 1
+				
 				if self.stop_after > 0 and releaseCounter >= self.stop_after:
 					self.endDocument()
 					if self.ignore_missing_tags and len(self.unknown_tags) > 0:

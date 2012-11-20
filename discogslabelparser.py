@@ -20,9 +20,6 @@ import model
 import sys
 import os
 
-labelCounter = 0
-
-
 class LabelHandler(xml.sax.handler.ContentHandler):
 	inElement = {
 				'id': False,
@@ -47,6 +44,7 @@ class LabelHandler(xml.sax.handler.ContentHandler):
 		self.exporter = exporter
 		self.stop_after = stop_after
 		self.ignore_missing_tags = ignore_missing_tags
+		self.labelCounter = 0
 
 	def startElement(self, name, attrs):
 		if not name in self.inElement:
@@ -106,9 +104,7 @@ class LabelHandler(xml.sax.handler.ContentHandler):
 					self.label.sublabels.append(self.buffer)
 			else:
 				self.exporter.storeLabel(self.label)
-
-				global labelCounter
-				labelCounter += 1
+				self.labelCounter += 1
 				if self.stop_after > 0 and labelCounter >= self.stop_after:
 					self.endDocument()
 					if self.ignore_missing_tags and len(self.unknown_tags) > 0:
@@ -117,6 +113,3 @@ class LabelHandler(xml.sax.handler.ContentHandler):
 
 		self.inElement[name] = False
 		self.buffer = ''
-
-#labels = {}
-#labelCounter = 0

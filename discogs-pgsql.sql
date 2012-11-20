@@ -63,8 +63,8 @@ CREATE TYPE description AS ENUM (
 
 --- label
 CREATE TABLE label (
-	id integer NOT NULL,
-	name text NOT NULL,
+	id integer,
+	name text,
 	contactinfo text,
 	profile text,
 	parent_label text,
@@ -76,8 +76,8 @@ CREATE TABLE label (
 -- master
 -- final type for genres is genre[]
 CREATE TABLE master (
-	id integer NOT NULL,
-	main_release integer NOT NULL,
+	id integer,
+	main_release integer,
 	title text,
 	year integer,
 	notes text,
@@ -89,7 +89,7 @@ CREATE TABLE master (
 -- release
 -- final type for genres is genre[]
 CREATE TABLE release (
-	id integer NOT NULL,
+	id integer,
 	status status,
 	title text,
 	country character varying(64),
@@ -103,16 +103,14 @@ CREATE TABLE release (
 
 -- label field is only for temporary use and dropped from final database after actual label_id field is set
 CREATE TABLE releases_labels (
-	id serial NOT NULL,
-	release_id integer NOT NULL,
+	release_id integer,
     label_id integer,
 	label text,
 	catno character varying(256)
 );
 
 CREATE TABLE release_identifier (
-	id serial NOT NULL,
-	release_id integer NOT NULL,
+	release_id integer,
 	type identifier_type,
 	value text,
 	description text
@@ -120,8 +118,7 @@ CREATE TABLE release_identifier (
 
 -- format_name is only for temporary use and dropped from final database after actual format field is set
 CREATE TABLE releases_formats (
-	id serial NOT NULL,
-	release_id integer NOT NULL,
+	release_id integer,
 	qty integer,
 	format_name character varying(32), 
     format format,
@@ -131,8 +128,8 @@ CREATE TABLE releases_formats (
 
 --- track
 CREATE TABLE track (
-	id serial NOT NULL,
-	release_id integer NOT NULL,
+	id serial,
+	release_id integer,
 	title text,
 	duration character varying(12),
 	position character varying(64)
@@ -140,8 +137,8 @@ CREATE TABLE track (
 
 --- artist
 CREATE TABLE artist (
-	id integer NOT NULL,
-	name text NOT NULL,
+	id integer,
+	name text,
 	realname text,
 	urls text[],
 	namevariations text[],
@@ -153,8 +150,7 @@ CREATE TABLE artist (
 );
 
 CREATE TABLE masters_artists (
-	id serial NOT NULL,
-	master_id integer NOT NULL,
+	master_id integer,
 	artist_id integer,
 	artist_name text,
 	anv text,
@@ -162,8 +158,7 @@ CREATE TABLE masters_artists (
 );
 
 CREATE TABLE releases_artists (
-	id serial NOT NULL,
-	release_id integer NOT NULL,
+	release_id integer,
 	artist_id integer,
 	artist_name text,
 	anv text,
@@ -171,8 +166,7 @@ CREATE TABLE releases_artists (
 );
 
 CREATE TABLE tracks_artists (
-	id serial NOT NULL,
-	track_id integer NOT NULL,
+	track_id integer,
 	artist_id integer,
 	artist_name text,
 	anv text,
@@ -180,8 +174,7 @@ CREATE TABLE tracks_artists (
 );
 
 CREATE TABLE releases_extraartists (
-	id serial NOT NULL,
-	release_id integer NOT NULL,
+	release_id integer,
 	artist_id integer,
 	artist_name text,
 	anv text,
@@ -191,8 +184,7 @@ CREATE TABLE releases_extraartists (
 );
 
 CREATE TABLE tracks_extraartists (
-	id serial NOT NULL,
-	track_id integer NOT NULL,
+	track_id integer,
 	artist_id integer,
 	artist_name text,
 	anv text,
@@ -200,44 +192,41 @@ CREATE TABLE tracks_extraartists (
 	role_details text
 );
 
---- image
+--- images
 CREATE TABLE image (
-	id serial NOT NULL,
-	uri text NOT NULL,
+	uri text,
 	height integer,
 	width integer,
-	type image_type,
 	uri150 text
 );
 
 CREATE TABLE labels_images (
-	id serial NOT NULL,
-	label_id integer NOT NULL,
-	image_uri text NOT NULL
+	label_id integer,
+	type image_type,
+	image_uri text
 );
 
 CREATE TABLE masters_images (
-	id serial NOT NULL,
-	master_id integer NOT NULL,
-	image_uri text NOT NULL
+	master_id integer,
+	type image_type,
+	image_uri text
 );
 
 CREATE TABLE releases_images (
-	id serial NOT NULL,
-	release_id integer NOT NULL,
-	image_uri text NOT NULL
+	release_id integer,
+	type image_type,
+	image_uri text
 );
 
 CREATE TABLE artists_images (
-	id serial NOT NULL,
-	artist_id integer NOT NULL,
-	image_uri text NOT NULL
+	artist_id integer,
+	type image_type,
+	image_uri text
 );
 
 -- video
 CREATE TABLE video (
-	id serial NOT NULL,
-	uri text NOT NULL,
+	uri text,
 	duration integer,
 	embed boolean,
 	description text,
@@ -245,15 +234,13 @@ CREATE TABLE video (
 );
 
 CREATE TABLE master_video (
-	id serial NOT NULL,
-	master_id integer NOT NULL,
-	video_uri text NOT NULL
+	master_id integer,
+	video_uri text
 );
 
 CREATE TABLE release_video (
-	id serial NOT NULL,
-	release_id integer NOT NULL,
-	video_uri text NOT NULL
+	release_id integer,
+	video_uri text
 );
 
 

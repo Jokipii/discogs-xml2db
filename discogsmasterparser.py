@@ -20,9 +20,6 @@ import sys
 import model
 import re
 
-masterCounter = 0
-
-
 class MasterHandler(xml.sax.handler.ContentHandler):
 	def __init__(self, exporter, stop_after=0, ignore_missing_tags=False):
 		self.knownTags = (
@@ -61,6 +58,7 @@ class MasterHandler(xml.sax.handler.ContentHandler):
 		self.stop_after = stop_after
 		self.ignore_missing_tags = ignore_missing_tags
 		self.stack = []
+		self.masterCounter = 0
 
 	def startElement(self, name, attrs):
 		if not name in self.knownTags:
