@@ -108,8 +108,8 @@ class Exporter:
 		self.count = self.count + 1
 		if self.count % 500 == 0:
 			qs = self.jobs.qsize()
-			# with every 100,00 we print out current queue size
-			if self.options.verbose and self.count % 1000 == 0:
+			if self.options.verbose and self.count % 10000 == 0:
+				# with every 10000 we print out timing and current queue size
 				print "%.2fs queue size %s" % (time.time()-self.timer, qs)
 				self.timer = time.time()
 			# if queue start filling we sleep
