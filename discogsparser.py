@@ -19,6 +19,7 @@ import xml.sax
 import sys
 import jsonexporter
 import argparse # in < 2.7 pip install argparse
+import gzip
 from os import path
 from model import ParserStopError
 from collections import deque
@@ -50,109 +51,50 @@ def first_file_match(file_pattern):
 	return matches[0] if len(matches) > 0 else None
 
 
-def parseArtists(parser, exporter):
+def parse(parser, exporter, entity_type, handler):
 	global options
-	artist_file = None
-	in_file = first_file_match('_artists.xml')
+	input_file = None
+	match_string = '_%s.xml' % entity_type
+	in_file = first_file_match(match_string)
 	if options.date is not None:
-		artist_file = "discogs_%s_artists.xml" % options.date
+		input_file = "discogs_%s_%s.xml.gz" % (options.date, entity_type)
+		if not path.exists(input_file):
+			input_file = "discogs_%s_%s.xml" % (options.date, entity_type)
 	elif in_file is not None:
-		artist_file = in_file
-
-	if artist_file is None:
-		#print "No artist file specified."
+		input_file = in_file
+	if input_file is None:
 		return
-	elif not path.exists(artist_file):
-		#print "File %s doesn't exist:" % artist_file
+	elif not path.exists(input_file):
 		return
+	parser.setContentHandler(handler(exporter))
+	try:
+		if input_file.endswith('.gz'):
+			parser.parse(gzip.open(input_file, 'rb'))
+		else:
+			parser.parse(input_file)
+	except ParserStopError as pse:
+		print "Parsed %d %s then stopped as requested." % (pse.records_parsed, entity_type)
 
+
+def artistHandler(exporter):
+	global options
 	from discogsartistparser import ArtistHandler
-	artistHandler = ArtistHandler(exporter, stop_after=options.n, ignore_missing_tags = options.ignore_unknown_tags)
-	parser.setContentHandler(artistHandler)
-	try:
-		parser.parse(artist_file)
-	except ParserStopError as pse:
-		print "Parsed %d artists then stopped as requested." % pse.records_parsed
-#	except model.ParserStopError as pse22:
-#		print "Parsed %d artists then stopped as requested." % pse.records_parsed
-#	except Exception as ex:
-#		print "Raised unknown error"
-#		print type(ex)
+	return ArtistHandler(exporter, stop_after=options.n, ignore_missing_tags = options.ignore_unknown_tags)
 
-
-def parseLabels(parser, exporter):
+def labelHandler(exporter):
 	global options
-	label_file = None
-	in_file = first_file_match('_labels.xml')
-	if options.date is not None:
-		label_file = "discogs_%s_labels.xml" % options.date
-	elif in_file is not None:
-		label_file = in_file
-
-	if label_file is None:
-		#print "No label file specified."
-		return
-	elif not path.exists(label_file):
-		#print "File %s doesn't exist:" % label_file
-		return
-
 	from discogslabelparser import LabelHandler
-	labelHandler = LabelHandler(exporter, stop_after=options.n, ignore_missing_tags = options.ignore_unknown_tags)
-	parser.setContentHandler(labelHandler)
-	try:
-		parser.parse(label_file)
-	except ParserStopError as pse:
-		print "Parsed %d labels then stopped as requested." % pse.records_parsed
+	return LabelHandler(exporter, stop_after=options.n, ignore_missing_tags = options.ignore_unknown_tags)
 
-
-def parseReleases(parser, exporter):
+def releaseHandler(exporter):
 	global options
-	release_file = None
-	in_file = first_file_match('_releases.xml')
-	if options.date is not None:
-		release_file = "discogs_%s_releases.xml" % options.date
-	elif in_file is not None:
-		release_file = in_file
-
-	if release_file is None:
-		#print "No release file specified."
-		return
-	elif not path.exists(release_file):
-		#print "File %s doesn't exist:" % release_file
-		return
-
 	from discogsreleaseparser import ReleaseHandler
-	releaseHandler = ReleaseHandler(exporter, stop_after=options.n, ignore_missing_tags = options.ignore_unknown_tags)
-	parser.setContentHandler(releaseHandler)
-	try:
-		parser.parse(release_file)
-	except ParserStopError as pse:
-		print "Parsed %d releases then stopped as requested." % pse.records_parsed
+	return ReleaseHandler(exporter, stop_after=options.n, ignore_missing_tags = options.ignore_unknown_tags)
 
-
-def parseMasters(parser, exporter):
+def masterHandler(exporter):
 	global options
-	master_file = None
-	in_file = first_file_match('_masters.xml')
-	if options.date is not None:
-		master_file = "discogs_%s_masters.xml" % options.date
-	elif in_file is not None:
-		master_file = in_file
-
-	if master_file is None:
-		#print "No masters file specified."
-		return
-	elif not path.exists(master_file):
-		#print "File %s doesn't exist:" % master_file
-		return
-
 	from discogsmasterparser import MasterHandler
-	masterHandler = MasterHandler(exporter, stop_after=options.n, ignore_missing_tags = options.ignore_unknown_tags)
-	parser.setContentHandler(masterHandler)
-	try:
-		parser.parse(master_file)
-	except ParserStopError as pse:
-		print "Parsed %d masters then stopped as requested." % pse.records_parsed
+	return MasterHandler(exporter, stop_after=options.n, ignore_missing_tags = options.ignore_unknown_tags)
 
 
 
@@ -212,10 +154,10 @@ that --params is used, e.g.:
 	exporter = make_exporter(options)
 	parser = xml.sax.make_parser()
 	try:
-		parseArtists(parser, exporter)
-		parseLabels(parser, exporter)
-		parseReleases(parser, exporter)
-		parseMasters(parser, exporter)
+		parse(parser, exporter, 'artists', artistHandler)
+		parse(parser, exporter, 'labels', labelHandler)
+		parse(parser, exporter, 'releases', releaseHandler)
+		parse(parser, exporter, 'masters', masterHandler)
 	finally:
 		exporter.finish(completely_done = True)
 

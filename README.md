@@ -9,6 +9,7 @@ It may work with 2.6 or 3.0, but probably not (I don't know, I didn't test). It 
 
 discogs-xml2db makes use of the following modules (some are standard in 2.7, some you'll need to `pip install`):
 * xml.sax - for handling the source XML files
+* gzip - for reading gziped input files
 * argparse - for parsing the command line arguments
 * json - to save files in JSON format or talk to some back-ends
 * couchdb - if you use the CouchDB back-end (probably not)
@@ -18,8 +19,8 @@ discogs-xml2db makes use of the following modules (some are standard in 2.7, som
 
 # Options for `discogsparser.py`
 
-* **Input**: `-d`/`--date` parses all three files (artists, labels, masters, releases) for a given monthly dump:
-    * `discogsparser.py -d 20111101` will look for `discogs_20111101_artists.xml`, `discogs_20111101_labels.xml`, `discogs_20111101_masters.xml`, and `discogs_20111101_releases.xml` in the current directory;
+* **Input**: `-d`/`--date` parses all four files (artists, labels, masters, releases) for a given monthly dump. Files can be in gzipped or extracted form:
+    * `discogsparser.py -d 20111101` will look for gzipped files `discogs_20111101_artists.xml.gz`, `discogs_20111101_labels.xml.gz`, `discogs_20111101_masters.xml.gz`, and `discogs_20111101_releases.xml.gz` in the current directory, if those are not found it looks extracted versions without '.gz'.
 * **Input**: parse only specific file(s):
     * `discogsparser.py /tmp/discogs_20111101_artists.xml /tmp/discogs_20111101_releases.xml` - will only parse the artist and release dumps from the `/tmp` directory;
 * **Input**: `-i`/`--ignore-unknown-tags`: ignores new fields that may appear in the XML as the dump format evolves  
@@ -102,7 +103,11 @@ artists - 18MB (48,852 records changed from November),
 labels - 3.2MB (11,997 records),
 releases - 256MB (98,287).
 
-
+The November 3th 2012 sizes:
+artists (2,600,844 records) - gzip: 95MB, xml: 505MB
+labels (401,714 records) - gzip: 15MB, xml: 77MB
+masters (487,308 records) - gzip: 59MB, xml: 460MB
+releases (3,478,340 records) - gzip: 1.6GB, xml: 10.1GB
 
 # Credits
 
