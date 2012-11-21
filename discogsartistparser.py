@@ -110,11 +110,11 @@ class ArtistHandler(xml.sax.handler.ContentHandler):
 			if self.artist.name:
 				self.exporter.storeArtist(self.artist)
 				self.artistCounter += 1
-				if self.stop_after > 0 and artistCounter >= self.stop_after:
+				if self.stop_after > 0 and self.artistCounter >= self.stop_after:
 					self.endDocument()
 					if self.ignore_missing_tags and len(self.unknown_tags) > 0:
 						print 'Encountered some unknown Artist tags: %s' % (self.unknown_tags)
-					raise model.ParserStopError(artistCounter)
+					raise model.ParserStopError(self.artistCounter)
 			else:
 				sys.stderr.writelines("Ignoring Artist %s with no name. Dictionary: %s\n" % (self.artist.id, self.artist.__dict__))
 

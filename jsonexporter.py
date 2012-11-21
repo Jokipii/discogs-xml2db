@@ -12,21 +12,24 @@ def jsonizer(obj, specify_object_type = True):
 	j_dict.update(obj.__dict__)
 	return j_dict 
 
+def screen(what):
+	print what
 
 class JsonConsoleExporter:
 	def __init__(self, params):
-		pass
-	
+		self.out = screen
+		self.file = None
+		if params:
+			self.file = open(params, 'w')
+			self.out = self.file.write
+
 	def dump(self, what):
-		j = self._store(what)
-		print j
+		self.out(json.dumps(what, default=jsonizer))
 		
 	def finish(self, completely_done = False):
-		pass
+		if completely_done and self.file:
+			self.file.close()
 	
-	def _store(self, what):
-		return json.dumps(what, default=jsonizer)
-
 	def storeArtist(self, artist):
 		self.dump(artist)
 	

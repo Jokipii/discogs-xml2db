@@ -105,11 +105,11 @@ class LabelHandler(xml.sax.handler.ContentHandler):
 			else:
 				self.exporter.storeLabel(self.label)
 				self.labelCounter += 1
-				if self.stop_after > 0 and labelCounter >= self.stop_after:
+				if self.stop_after > 0 and self.labelCounter >= self.stop_after:
 					self.endDocument()
 					if self.ignore_missing_tags and len(self.unknown_tags) > 0:
 						print 'Encountered some unknown Label tags: %s' % (self.unknown_tags)
-					raise model.ParserStopError(labelCounter)
+					raise model.ParserStopError(self.labelCounter)
 
 		self.inElement[name] = False
 		self.buffer = ''

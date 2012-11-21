@@ -275,11 +275,11 @@ class ReleaseHandler(xml.sax.handler.ContentHandler):
 				
 				self.exporter.storeRelease(self.release)
 				
-				if self.stop_after > 0 and releaseCounter >= self.stop_after:
+				if self.stop_after > 0 and self.releaseCounter >= self.stop_after:
 					self.endDocument()
 					if self.ignore_missing_tags and len(self.unknown_tags) > 0:
 						print 'Encountered some unknown Release tags: %s' % (self.unknown_tags)
-					raise model.ParserStopError(releaseCounter)
+					raise model.ParserStopError(self.releaseCounter)
 
 		if self.stack[-1] == name:
 			self.stack.pop()
