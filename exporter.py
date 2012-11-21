@@ -176,7 +176,7 @@ class ExporterWorker(threading.Thread):
 		while 1:
 			try:
 				# Try and get a job out of the queue
-				job = self.jobs.get(False)
+				job = self.jobs.get(True)
 				# Run actual exporter
 				self.doTask(job[0], job[1])
 				# Let the queue know the job is finished.
