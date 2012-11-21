@@ -170,17 +170,15 @@ class MasterHandler(xml.sax.handler.ContentHandler):
 						self.master.artist += '%s %s ' % (j.name, j.join)
 					self.master.artist += self.master.artists[-1].name
 
-				global masterCounter
-				masterCounter += 1
+				self.masterCounter += 1
 				#'''PREPARE FOR DATABASE
 				self.exporter.storeMaster(self.master)
 
-				masterCounter += 1
-				if self.stop_after > 0 and masterCounter >= self.stop_after:
+				if self.stop_after > 0 and self.masterCounter >= self.stop_after:
 					self.endDocument()
 					if self.ignore_missing_tags and len(self.unknown_tags) > 0:
 						print 'Encountered some unknown Master tags: %s' % (self.unknown_tags)
-					raise model.ParserStopError(masterCounter)
+					raise model.ParserStopError(self.masterCounter)
 
 		if self.stack[-1] == name:
 			self.stack.pop()
